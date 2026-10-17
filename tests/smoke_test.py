@@ -289,11 +289,11 @@ def sort(browser):
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(PAGE)
     page.click('[data-tab="sort"]')
-    # 1-15: H, Li, Be, B, C, N, Al, Si, P one by one, plus S, I, Sn (border, always in); He, O, F, Ne left off;
-    # Na + Mg are the metal block -> 12 + 1 = 13 things to sort, 14 squares
-    check(page.locator("#sBoard .sq.sortable").count() == 14, "set 1-15 sort should have 14 sortable squares")
-    for z in (2, 8, 9, 10):
-        check("sortable" not in page.locator(f'#sBoard [data-z="{z}"]').get_attribute("class"), f"element {z} should be left off the sort")
+    # 1-15: H, Li, Be, B, C, N, Al, Si, P one by one, plus S, I, Sn (border, always in);
+    # Na + Mg = metal block, He + O + F + Ne = nonmetal block -> 12 + 2 = 14 things to sort, 18 squares
+    check(page.locator("#sBoard .sq.sortable").count() == 18, "set 1-15 sort should have 18 sortable squares")
+    nb = sorted(int(x) for x in page.locator("#sBoard .sq.nblk").evaluate_all("els => els.map(e => e.dataset.z)"))
+    check(nb == [2, 8, 9, 10], f"He, O, F, Ne should be the nonmetal block in 1-15, got {nb}")
     for z in (16, 53, 50):
         check("sortable" in page.locator(f'#sBoard [data-z="{z}"]').get_attribute("class"), f"element {z} should always be in the sort")
     check(sorted(int(x) for x in page.locator("#sBoard .sq.blk").evaluate_all("els => els.map(e => e.dataset.z)")) == [11, 12], "Na and Mg should be the block in 1-15")
@@ -313,7 +313,7 @@ def sort(browser):
     check(page.locator('#ovals .oval[data-c="metal"] .chip[data-u="z3"]').count() == 1, "dragging Li to metal failed")
     tap_place(5, "nonmetal")                                   # boron is a metalloid: wrong on purpose
     page.click("#sCheck")
-    check(page.locator("#sScore").inner_text().startswith("2 / 13 right"), f"sort score: {page.locator('#sScore').inner_text()}")
+    check(page.locator("#sScore").inner_text().startswith("2 / 14 right"), f"sort score: {page.locator('#sScore').inner_text()}")
     check("wrong" in page.locator('#ovals .chip[data-u="z5"]').get_attribute("class"), "boron in nonmetal should be wrong")
     page.click("#sRetry")
     check(page.locator('#ovals .chip[data-u="z5"]').count() == 0, "send wrong ones back should return boron")
@@ -322,10 +322,12 @@ def sort(browser):
     tap_place(11, "metal")
     check(page.locator('#ovals .oval[data-c="metal"] .chip[data-u="blk"]').inner_text() == "2 metals", "block chip should say 2 metals")
     check(all("placed" in page.locator(f'#sBoard [data-z="{z}"]').get_attribute("class") for z in (11, 12)), "the whole block should leave the table")
+    tap_place(8, "nonmetal")   # the nonmetal block: tap O, then the oval, moves He, O, F, Ne together
+    check(page.locator('#ovals .oval[data-c="nonmetal"] .chip[data-u="nblk"]').inner_text() == "4 nonmetals", "nonmetal block chip should say 4 nonmetals")
     for z in (4, 5, 6, 7, 13, 14, 15, 16, 53, 50):
         tap_place(z, EL[z][2])
     page.click("#sCheck")
-    check(page.locator("#sScore").inner_text().startswith("13 / 13 right"), f"all placed correctly should score 13/13: {page.locator('#sScore').inner_text()}")
+    check(page.locator("#sScore").inner_text().startswith("14 / 14 right"), f"all placed correctly should score 14/14: {page.locator('#sScore').inner_text()}")
     check(page.locator("#sRule").is_visible(), "the staircase rule should appear after a perfect sort")
     # ...and the whole table comes back, every element colored by category, so the full staircase shows
     check(page.locator("#sBoard .sq.found").count() == 118 and page.locator("#sBoard .sq.placed").count() == 0, "perfect sort should color the whole table")
@@ -338,7 +340,7 @@ def sort(browser):
     check(page.locator("#sBoard .sq.blk").count() == 12, "K through Zn should be the block in 16-30")
     tap_place(19, "nonmetal")
     page.click("#sCheck")
-    check(page.locator("#sScore").inner_text().startswith("0 / 6 right"), f"16-30 score: {page.locator('#sScore').inner_text()}")
+    check(page.locator("#sScore").inner_text().startswith("0 / 5 right"), f"16-30 score: {page.locator('#sScore').inner_text()}")
     check("wrong" in page.locator('#ovals .chip[data-u="blk"]').get_attribute("class"), "metal block in nonmetal should be wrong")
     check(not errors, f"JavaScript errors in sort: {errors}")
     ctx.close()

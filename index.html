@@ -126,6 +126,8 @@
   .sq.placed { visibility: hidden; }
   .sq.sortable.blk { background: #e8f1ff; border: 2px solid #6d93c9; }
   .chip.blkchip { background: #e8f1ff; }
+  .sq.sortable.nblk { background: #fffbe0; border: 2px solid #c9a227; }
+  .chip.nblkchip { background: #fffbe0; }
   .sq.pick, .chip.pick { outline: 3px solid #f0a500; }
   .ghost { position: fixed; pointer-events: none; z-index: 10; font-weight: 800; padding: 6px 10px; border: 2px solid var(--orange); border-radius: 6px; background: #fff; transform: translate(-50%, -50%); }
   .cx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -244,8 +246,8 @@
   <div class="panel" id="tab-sort" hidden>
     <div class="prompt">Metal, metalloid, or nonmetal?</div>
     <p class="note" style="margin-top:0">Drag each element from the table into its oval (or tap the element, then tap the oval). Then check.</p>
-    <p class="note" style="margin-top:0">This sort is about the staircase border: He, O, F and Ne are left off, and S, I and Sn are always in.</p>
-    <p class="note" id="sBlockNote" style="margin-top:0">The light-blue squares are one big block: grab any of them and the whole block moves together.</p>
+    <p class="note" style="margin-top:0">This sort is about the staircase border: elements that touch the staircase move one by one, and S, I and Sn are always in.</p>
+    <p class="note" id="sBlockNote" style="margin-top:0">The light-blue squares are one metal block and the light-yellow squares are one nonmetal block: grab any square and its whole block moves together.</p>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="sCheck" type="button">Check</button>
       <button class="btn alt" id="sRetry" type="button" hidden>Send wrong ones back</button>
@@ -809,12 +811,13 @@
   }
 
   // ---------------- Sort: drag from the table into metal / metalloid / nonmetal ovals ----------------
-  // Each draggable thing is a "unit": one element ('z5'), or the metal block ('blk') = the left-side metals
-  // (Na, Mg, K through Zn, Ag, Pt, Au, Hg, U, Pu), which move together so the sort stays quick.
-  // Rows 1-2 and the elements near the staircase (Al, Si, P, S, Cl, Ar, Kr, Br, I, Rn, Sn, Pb) stay one by one.
-  // The sort is about the staircase border. Left off (far from the border): He, O, F, Ne.
+  // The sort is about the staircase border. Each draggable thing is a "unit": one element ('z5'), the metal
+  // block ('blk': Na, Mg, K through Zn, Ag, Pt, Au, Hg, U, Pu) or the nonmetal block ('nblk': He, O, F, Ne, Cl,
+  // Ar, Kr = nonmetals that don't touch a metalloid). Blocks move as one. One by one: H, Li, Be and the
+  // elements touching the staircase (B, C, N, Al, Si, P, S, Br, I, Rn, Sn, Pb).
   // Always in, whatever element group is picked: S, I, Sn (they sit at the border).
-  var SORT_SKIP = { 2: 1, 8: 1, 9: 1, 10: 1 }, SORT_ADD = [16, 53, 50];
+  var SORT_SKIP = {}, SORT_ADD = [16, 53, 50];
+  var NBLOCK = { 2: 1, 8: 1, 9: 1, 10: 1, 17: 1, 18: 1, 36: 1 };
   function sortSet() {
     var out = SETS[S.set].filter(function (e) { return !SORT_SKIP[e.z]; });
     SORT_ADD.forEach(function (z) { if (out.indexOf(BYZ[z]) < 0) out.push(BYZ[z]); });
@@ -822,10 +825,15 @@
   }
   var BLOCK = { 11: 1, 12: 1, 19: 1, 20: 1, 21: 1, 22: 1, 23: 1, 24: 1, 25: 1, 26: 1, 27: 1, 28: 1, 29: 1, 30: 1, 47: 1, 78: 1, 79: 1, 80: 1, 92: 1, 94: 1 };
   var sCells = {}, sPlaced = {}, sPicked = null, sDrag = null;   // sPlaced[unit] = oval category it was put in
-  function unitOf(z) { return BLOCK[z] ? 'blk' : 'z' + z; }
-  function members(u) { return u === 'blk' ? sortSet().filter(function (e) { return BLOCK[e.z]; }).map(function (e) { return e.z; }) : [+u.slice(1)]; }
-  function unitCat(u) { return u === 'blk' ? 'metal' : BYZ[+u.slice(1)].cat; }
-  function unitLabel(u) { return u === 'blk' ? members(u).length + ' metals' : BYZ[+u.slice(1)].sym; }
+  function unitOf(z) { return BLOCK[z] ? 'blk' : NBLOCK[z] ? 'nblk' : 'z' + z; }
+  function isBlock(u) { return u === 'blk' || u === 'nblk'; }
+  function members(u) {
+    if (!isBlock(u)) return [+u.slice(1)];
+    var B = u === 'blk' ? BLOCK : NBLOCK;
+    return sortSet().filter(function (e) { return B[e.z]; }).map(function (e) { return e.z; });
+  }
+  function unitCat(u) { return u === 'blk' ? 'metal' : u === 'nblk' ? 'nonmetal' : BYZ[+u.slice(1)].cat; }
+  function unitLabel(u) { return u === 'blk' ? members(u).length + ' metals' : u === 'nblk' ? members(u).length + ' nonmetals' : BYZ[+u.slice(1)].sym; }
   function unitsInSet() {
     var seen = {}, out = [];
     sortSet().forEach(function (e) { var u = unitOf(e.z); if (!seen[u]) { seen[u] = 1; out.push(u); } });
@@ -840,16 +848,16 @@
       if (!inSet[z]) { n.style.opacity = '.3'; return; }
       var u = unitOf(z);
       n.classList.add('sortable');
-      if (u === 'blk') n.classList.add('blk');
+      if (isBlock(u)) n.classList.add(u);
       n.setAttribute('role', 'button');
-      n.setAttribute('aria-label', u === 'blk' ? 'Metal block: ' + members(u).map(function (m) { return BYZ[m].name; }).join(', ') : BYZ[z].name + ', ' + BYZ[z].sym);
+      n.setAttribute('aria-label', isBlock(u) ? (u === 'blk' ? 'Metal block: ' : 'Nonmetal block: ') + members(u).map(function (m) { return BYZ[m].name; }).join(', ') : BYZ[z].name + ', ' + BYZ[z].sym);
       n.addEventListener('pointerdown', function (ev) { startSortDrag(ev, u, n); });
     });
     [].forEach.call(document.querySelectorAll('#ovals .in'), function (x) { x.innerHTML = ''; });
     document.getElementById('sScore').textContent = '';
     document.getElementById('sRetry').hidden = true;
     document.getElementById('sRule').hidden = true;
-    document.getElementById('sBlockNote').hidden = !members('blk').length;
+    document.getElementById('sBlockNote').hidden = !members('blk').length && !members('nblk').length;
   }
   function clearSortMarks() {
     [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) { c.classList.remove('right', 'wrong'); });
@@ -871,7 +879,7 @@
     sPlaced[u] = cat;
     members(u).forEach(function (m) { sCells[m].classList.add('placed'); });
     var chip = document.createElement('button');
-    chip.type = 'button'; chip.className = 'chip' + (u === 'blk' ? ' blkchip' : ''); chip.textContent = unitLabel(u); chip.setAttribute('data-u', u);
+    chip.type = 'button'; chip.className = 'chip' + (isBlock(u) ? ' ' + u + 'chip' : ''); chip.textContent = unitLabel(u); chip.setAttribute('data-u', u);
     chip.title = members(u).map(function (m) { return BYZ[m].name; }).join(', ');
     chip.addEventListener('pointerdown', function (ev) { startSortDrag(ev, u, chip); });
     document.querySelector('#ovals .oval[data-c="' + cat + '"] .in').appendChild(chip);
@@ -904,7 +912,7 @@
       d.moved = true; unpickSort();
       d.ghost = document.createElement('div'); d.ghost.className = 'ghost'; d.ghost.textContent = unitLabel(d.u);
       document.body.appendChild(d.ghost);
-      if (d.u === 'blk' && !d.src.classList.contains('chip')) members('blk').forEach(function (m) { sCells[m].classList.add('pick'); });
+      if (isBlock(d.u) && !d.src.classList.contains('chip')) members(d.u).forEach(function (m) { sCells[m].classList.add('pick'); });
     }
     ev.preventDefault();
     d.ghost.style.left = ev.clientX + 'px'; d.ghost.style.top = ev.clientY + 'px';
