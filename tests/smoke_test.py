@@ -174,6 +174,8 @@ def run(browser, label, viewport):
     # --- game, easy round first: the row is highlighted before any tap ---
     page.click('[data-tab="game"]')
     check(page.locator("#gEasy").is_checked(), "first round of a group should be the easy round")
+    check(page.locator("#gPrompt").inner_text().startswith("Find:"), "opening the tab should start a round (no Start press needed)")
+    check(page.locator("#gPrompt .findlbl").evaluate("e => getComputedStyle(e).color") == "rgb(30, 138, 68)", "Find: should be green")
     page.click("#gStart")
     name = find_name(page)
     check("rowhint" in page.locator(f'#gBoard [data-z="{BY_NAME[name][0]}"]').get_attribute("class"), "easy round should show the row first")
@@ -327,7 +329,7 @@ def sort(browser):
     check(page.locator("#sRule").is_visible(), "the staircase rule should appear after a perfect sort")
     # ...and the whole table comes back, every element colored by category, so the full staircase shows
     check(page.locator("#sBoard .sq.found").count() == 118 and page.locator("#sBoard .sq.placed").count() == 0, "perfect sort should color the whole table")
-    for z, cat in ((5, "metalloid"), (32, "metalloid"), (52, "metalloid"), (34, "nonmetal"), (54, "nonmetal"), (1, "nonmetal"), (55, "metal"), (84, "metal"), (13, "metal")):
+    for z, cat in ((5, "metalloid"), (32, "metalloid"), (52, "metalloid"), (34, "nonmetal"), (54, "nonmetal"), (1, "nonmetal"), (55, "metal"), (84, "metalloid"), (85, "metalloid"), (83, "metal"), (13, "metal")):
         check(cat in page.locator(f'#sBoard [data-z="{z}"]').get_attribute("class").split(), f"element {z} should be colored {cat}")
     for e_z, (_, _, cat) in EL.items():   # the 42 agree with the page's own answer key
         check(cat in page.locator(f'#sBoard [data-z="{e_z}"]').get_attribute("class").split(), f"element {e_z} colored wrong")

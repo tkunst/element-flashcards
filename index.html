@@ -93,6 +93,7 @@
   .sq.reveal { background: #f0a500 !important; color: #1d2330; }
   .sq.b0 { background: #fff; } .sq.b1 { background: #fde8e6; } .sq.b2 { background: #fff4d6; } .sq.b3 { background: #d9f0e0; } .sq.b4 { background: #9fd8b0; } .sq.b5 { background: #4fb371; color: #fff; }
   .prompt { font-size: 1.4em; font-weight: 800; margin: 0 0 4px; }
+  .findlbl { color: var(--right); }
   .prompt small { font-size: .6em; font-weight: 600; color: var(--soft); }
   .gamebar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 10px; }
   .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .88em; color: var(--soft); margin-top: 10px; }
@@ -431,7 +432,8 @@
     'Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu ' +
     'Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr ' +
     'Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og').split(' ');
-  var STAIR = { 5: 1, 14: 1, 32: 1, 33: 1, 51: 1, 52: 1 };
+  // Metalloids, as in the class course notes' periodic table: B, Si, Ge, As, Sb, Te, Po, At.
+  var STAIR = { 5: 1, 14: 1, 32: 1, 33: 1, 51: 1, 52: 1, 84: 1, 85: 1 };
   var CATNAME = { metal: 'METAL', nonmetal: 'NONMETAL', metalloid: 'METALLOID' };
 
   // Periodic-table position: [row, col]; rows 9-10 are the lanthanide/actinide strip (row 8 is a spacer).
@@ -557,6 +559,7 @@
     ['cards', 'sort', 'game', 'cx', 'spell', 'progress'].forEach(function (k) { document.getElementById('tab-' + k).hidden = k !== t; });
     if (t === 'progress') renderProgress();
     if (t === 'sort') resetSort();
+    if (t === 'game') startGame();
     if (t === 'cx' && !cx) newCx();
     if (t === 'spell') renderFams();
     if (t === 'cards') renderHome();
@@ -566,7 +569,7 @@
     S.set = k; save();
     [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.classList.toggle('on', b.getAttribute('data-set') === k); });
     stopRun(); stopGame();
-    renderHome(); renderProgress(); resetGameBoard(); resetSort(); cx = null; if (tab === 'cx') newCx(); renderFams();
+    renderHome(); renderProgress(); resetGameBoard(); resetSort(); if (tab === 'game') startGame(); cx = null; if (tab === 'cx') newCx(); renderFams();
   }
   [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.addEventListener('click', function () { setSet(b.getAttribute('data-set')); }); });
   function setNameMode(m) {
@@ -956,8 +959,8 @@
   });
   document.getElementById('sReset').addEventListener('click', resetSort);
   // After a perfect sort: every element back on the table, colored by category, so the whole staircase shows.
-  // Metalloids = the six on the staircase (B, Si, Ge, As, Sb, Te). Nonmetals = H + everything right of the stairs.
-  var NONMETAL_Z = [1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 85, 86, 117, 118];
+  // Metalloids = the eight on the staircase (STAIR). Nonmetals = H + everything right of the stairs.
+  var NONMETAL_Z = [1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 86, 117, 118];
   function catOf(z) {
     if (STAIR[z]) return 'metalloid';
     return NONMETAL_Z.indexOf(z) >= 0 ? 'nonmetal' : 'metal';
@@ -982,16 +985,19 @@
     // The first round of each element group is an easy round; after one is finished, hints wait for 2 misses.
     document.getElementById('gEasy').checked = !(S.easyDone || {})[S.set];
   }
+  document.getElementById('gEasy').addEventListener('change', function () { var easy = this.checked; startGame(); document.getElementById('gEasy').checked = easy; if (g) { g.easy = easy; clearHints(); nextTarget(); } });
   function bestKey() { return S.set + ((S.gBoard || 'sym') === 'sym' ? '' : '-' + S.gBoard); }
   [].forEach.call(document.querySelectorAll('[data-gboard]'), function (b) {
-    b.addEventListener('click', function () { S.gBoard = b.getAttribute('data-gboard'); save(); stopGame(); resetGameBoard(); });
+    b.addEventListener('click', function () { S.gBoard = b.getAttribute('data-gboard'); save(); startGame(); });
   });
   function fmt(ms) { var s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function stopGame() { if (gTimer) clearInterval(gTimer); gTimer = null; g = null; }
   function clearHints() {
     Object.keys(gCells).forEach(function (z) { gCells[z].classList.remove('miss', 'rowhint', 'reveal'); });
   }
-  document.getElementById('gStart').addEventListener('click', function () {
+  // A round starts by itself when the tab opens (or the board / element group changes); Restart starts over.
+  document.getElementById('gStart').addEventListener('click', startGame);
+  function startGame() {
     stopGame(); resetGameBoard();
     g = { queue: shuffle(SETS[S.set].map(function (e) { return e.z; })), misses: 0, firstTry: 0, total: SETS[S.set].length,
       timed: document.getElementById('gTimed').checked, easy: document.getElementById('gEasy').checked, t0: Date.now() };
@@ -999,13 +1005,13 @@
     if (g.timed) gTimer = setInterval(function () { if (g) document.getElementById('gTime').textContent = fmt(Date.now() - g.t0); }, 500);
     else document.getElementById('gTime').textContent = '';
     nextTarget();
-  });
+  }
   function nextTarget() {
     clearHints();
     if (!g.queue.length) return endGame();
     g.misses = 0;
     var e = BYZ[g.queue[0]];
-    document.getElementById('gPrompt').innerHTML = 'Find: ' + e.name + playBtn(e);
+    document.getElementById('gPrompt').innerHTML = '<span class="findlbl">Find:</span> ' + e.name + playBtn(e);
     document.getElementById('gStatus').textContent = (g.total - g.queue.length) + ' of ' + g.total + ' found' +
       (g.easy ? '. It is in the highlighted row.' : '');
     if (g.easy) showRow(g.queue[0]);
