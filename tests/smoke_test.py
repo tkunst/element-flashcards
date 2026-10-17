@@ -482,6 +482,8 @@ def data_checks():
     ph = html[html.index("    phon: {"):html.index("  // Where each name comes from")]
     cards = re.findall(r"\['([^']+)', '(?:[^'\\]|\\.)*',\s*'([^']+)'\]", ph)
     check(len(cards) == 14, f"expected the phoneme cards, found {len(cards)}")
+    check(all(c[0].startswith(("Same Sound, Different Spelling: ", "Same Spelling, Different Sound: ")) for c in cards), "phoneme cards must be titled Same Sound, Different Spelling / Same Spelling, Different Sound")
+    check(sum(c[0].startswith("Same Sound") for c in cards) == 8, "expected 8 Same Sound, Different Spelling cards")
     def has(name, sound):
         ipa = say[name].replace("ˈ", "").replace("ɜr", "ər")
         if sound == "ɪ":  # short i on its own, not the second half of /aɪ/, /eɪ/, /ɔɪ/
@@ -489,7 +491,7 @@ def data_checks():
         return sound in ipa
     one_sound = {"/k/": "k", "/f/": "f", "/s/": "s", "/z/": "z", "/ɪ/": "ɪ", "/aɪ/": "aɪ", "/i/": "i", "/ər/": "ər"}
     for title, items in cards:
-        key = title.split(":")[0]
+        key = title.split(": ")[-1] if title.startswith("Same Sound, Different Spelling") else None
         if key in one_sound:
             for w in items.split():
                 n = w.replace("[", "").replace("]", "")
