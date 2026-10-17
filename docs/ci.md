@@ -29,7 +29,8 @@ The test carries its own answer key for all 42 elements, so it also cross-checks
 - Game: the first round of a group is the easy round (row highlighted before any tap); finishing it makes the next round normal (no row until 2 misses, square revealed at 3); a correct tap counts and colors the square.
 - Backup code: reset clears progress and restore brings it back exactly.
 - Connections (same element): 16 tiles, 4 of each kind; each group's symbol, name, number and map square agree with the answer key; 3-of-4 says "One away!", 2+2 is not a group, all 4 groups solve with the mistake count shown. Same family: 4 groups solve and show the family labels.
-- Spelling families list each of the 42 names exactly once, mark the tricky letters, and tapping a name shows its symbol and map square.
+- Spelling families list each of the 42 names exactly once, mark the letters to notice, and tapping a name shows its symbol and map square.
+- Wording rule (static check): the page and README never use "tricky", "sight word(s)", "heart word(s)", "sneaky", "whole word", "irregular", "memorize", or "doesn't follow", so nothing suggests a word can't be sounded out.
 - Letter-teams view: Phosphorus shows Ph, ph, or boxed; Chlorine shows the i_e split team; all 42 names still spelled.
 - Pronunciations: every name has an IPA transcription + respelling (hand-written, then cross-checked against the CMU Pronouncing Dictionary on 2026-10-17: 41 of 42 identical; Uranium uses the dictionary-standard /jʊˈreɪniəm/ where CMU has /jəˈreɪniəm/). Potassium was later changed to /poʊˈtæsiəm/ (long o) to match the recorded voice. The data check confirms the "-on" tip lists the "ahn" names (/ɑn/) and the "un" names (/ən/) correctly.
 - Audio: all 42 clips exist at `audio/NN-name.mp3` and are real MP3s; the flashcard answer's, Find prompt's and Spelling detail's play buttons load the right clip without a media error.

@@ -305,16 +305,16 @@
   <!-- SPELLING FAMILIES -->
   <div class="panel" id="tab-spell" hidden>
     <div class="prompt">Spelling families</div>
-    <p class="note" style="margin-top:0">The 42 names fall into a few families that share an ending. Learn the pattern once, then just the tricky letters (in <b style="color:#b3261e;text-decoration:underline">red</b>). Tap a name to see its symbol and where it lives. Names outside the element group you picked are faded.</p>
+    <p class="note" style="margin-top:0">The 42 names fall into a few families that share an ending. Learn each ending, then notice the letters in <b style="color:#b3261e;text-decoration:underline">red</b>: they show which spelling the name uses for that sound. Tap a name to see its symbol and where it lives. Names outside the element group you picked are faded.</p>
     <div class="row" style="margin-top:10px">
       <span class="lbl">Show:</span>
-      <button class="pill" type="button" data-spellview="marks">Tricky letters</button>
+      <button class="pill" type="button" data-spellview="marks">Letters to notice</button>
       <button class="pill" type="button" data-spellview="graphemes">Letter teams</button>
     </div>
     <div class="glegend" id="glegend" hidden>
       <span><span class="gr multi">ph</span> letters that team up to spell one sound</span>
       <span><span class="gr split">i</span>n<span class="gr split">e</span> a split team: two letters apart that work together (the e makes the i say "ee" or "eye")</span>
-      <span><b>Iron</b> doesn't follow the usual sounds ("eye-ern"): learn it as a whole word</span>
+      <span><b>Iron</b>: i says "eye", and r-o-n is said "ern" (EYE-ern)</span>
     </div>
     <div class="fams" id="fams"></div>
     <div class="fdetail" id="fdetail"></div>
@@ -1159,19 +1159,21 @@
   });
 
   // ---------------- Spelling families ----------------
-  // [family, tip, names with the tricky letters in [brackets]]
+  // [family, tip, names with the letters to notice in [brackets]]
+  // Wording rule: always explain which letters spell which sound. Never call letters "tricky" or a word
+  // a "sight word"/"heart word", and never suggest a word can't be sounded out.
   var SPELL = [
-    ['-ium', 'Most of the metals here end in <b>-ium</b>. Watch the double letters in Beryllium and Potassium, and the <b>ch</b> (like "chorus") in Chromium.',
+    ['-ium', 'Most of the metals here end in <b>-ium</b> ("ee-um"). Beryllium spells its "l" sound with <b>ll</b>, and Potassium spells its "s" sound with <b>ss</b>. In Chromium, <b>ch</b> spells the "k" sound, like in chorus.',
       'Helium Lithium Bery[ll]ium Sodium Magnesium Pota[ss]ium Calcium Scandium Titanium Vanadium [Ch]romium Uranium Plutonium'],
-    ['-inum', 'These two break the -ium pattern: <b>no i before the um</b>.', 'Alumi[num] Plati[num]'],
-    ['-ine', 'All four are <b>halogens</b>. Fluorine has <b>uo</b> (not "flour"); Chlorine starts with <b>ch</b>.', 'Fl[uo]rine [Ch]lorine Bromine Iodine'],
-    ['-on', 'All spelled <b>-on</b>, but it sounds two ways: "ahn" in Boron, Neon, Argon, Krypton and Radon, and a quick "un" in Carbon and Silicon. Iron is said "eye-ern" but spelled i-r-o-n.', 'Boron Carbon Neon Silicon Argon Kr[y]pton Radon [Iron]'],
-    ['-gen', '<b>-gen</b> means "maker": hydrogen = water-maker, oxygen = acid-maker, nitrogen = maker of niter. Two have a <b>y</b>.', 'H[y]drogen Nitrogen Ox[y]gen'],
-    ['-er / -ur', 'Copper and Silver end <b>-er</b>. Sulfur ends <b>-ur</b>, with a u in both halves.', 'Copp[er] Silv[er] Sulf[ur]'],
-    ['short and old', 'Short names, used for thousands of years. Zinc ends in <b>c</b>, not k. Lead is spelled like "lead the way" but said "led".', 'Tin Zin[c] Gold L[ea]d'],
-    ['one of a kind', 'Phosphorus has <b>two ph</b> and ends <b>-us</b>. Manganese (Mn) is not Magnesium (Mg). Nickel ends <b>-el</b>.', '[Ph]os[ph]or[us] Mangan[ese] Cobalt Nick[el] Mercur[y]']
+    ['-inum', 'These two end <b>-num</b> with no i before it, and you can hear that: uh-LOO-mih-<b>num</b>, PLAT-uh-<b>num</b> have no "ee" sound before the "um".', 'Alumi[num] Plati[num]'],
+    ['-ine', 'All four are <b>halogens</b>. In Fluorine, <b>uor</b> spells "oor" (FLOOR-een). In Chlorine, <b>ch</b> spells the "k" sound.', 'Fl[uo]rine [Ch]lorine Bromine Iodine'],
+    ['-on', 'All spelled <b>-on</b>, and it sounds two ways: "ahn" in Boron, Neon, Argon, Krypton and Radon, and a quick "un" in Carbon and Silicon. In Krypton, <b>y</b> spells the short i sound. In Iron, i says "eye" and <b>ron</b> is said "ern": EYE-ern.', 'Boron Carbon Neon Silicon Argon Kr[y]pton Radon I[ron]'],
+    ['-gen', '<b>-gen</b> means "maker": hydrogen = water-maker, oxygen = acid-maker, nitrogen = maker of niter. Two use a <b>y</b>: it spells "eye" in Hydrogen and a quick "uh" in Oxygen.', 'H[y]drogen Nitrogen Ox[y]gen'],
+    ['-er / -ur', 'Copper and Silver spell their ending "er" sound with <b>er</b>. Sulfur spells it with <b>ur</b>: sul-fur, a u in both parts.', 'Copp[er] Silv[er] Sulf[ur]'],
+    ['short and old', 'Short names, used for thousands of years. Zinc spells its last "k" sound with <b>c</b>. In Lead, <b>ea</b> spells short e, like in bread and head.', 'Tin Zin[c] Gold L[ea]d'],
+    ['one of a kind', 'Phosphorus spells its "f" sound with <b>ph</b>, twice, and ends <b>-us</b>. Manganese (Mn, MANG-guh-neez) and Magnesium (Mg, mag-NEE-zee-um) are different elements. Nickel spells its ending "ul" sound with <b>el</b>. Mercury ends with <b>y</b> saying "ee".', '[Ph]os[ph]or[us] Mangan[ese] Cobalt Nick[el] Mercur[y]']
   ];
-  var SNEAKY = 'H[y]drogen Ox[y]gen Ber[y]llium Kr[y]pton Mercur[y]';
+  var YVOWEL = 'H[y]drogen Ox[y]gen Ber[y]llium Kr[y]pton Mercur[y]';
   var NAMEZ = {}; EL.forEach(function (e) { NAMEZ[e.name] = e.z; });
   function marked(w) { return w.replace(/\[([^\]]+)\]/g, '<b>$1</b>'); }
   // Letter teams (graphemes): the letters that spell each sound, separated by spaces.
@@ -1229,8 +1231,8 @@
           return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
         }).join('') + '</div></div>';
     }).join('');
-    html += '<div class="fam f8"><h3>sneaky y</h3><p class="tip">In all five, <b>y</b> spells a vowel sound: "eye" in Hydrogen, short i in Beryllium and Krypton, a quick "uh" in Oxygen, and "ee" at the end of Mercury (like happy).</p><div class="names">' +
-      SNEAKY.split(' ').map(function (w) {
+    html += '<div class="fam f8"><h3>y as a vowel</h3><p class="tip">In all five, <b>y</b> spells a vowel sound: "eye" in Hydrogen, short i in Beryllium and Krypton, a quick "uh" in Oxygen, and "ee" at the end of Mercury (like happy).</p><div class="names">' +
+      YVOWEL.split(' ').map(function (w) {
         var z = NAMEZ[plain(w)];
         return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
       }).join('') + '</div></div>';

@@ -461,6 +461,16 @@ def data_checks():
         check(clip.exists() and clip.stat().st_size > 2000, f"missing or empty clip: {clip.name}")
         head = clip.read_bytes()[:3]
         check(head == b"ID3" or (head[0] == 0xFF and head[1] & 0xE0 == 0xE0), f"{clip.name} is not an MP3")
+    # Wording rule for learning tools: explain sound-to-letter mappings; never label spellings "tricky",
+    # "sight/heart words", or suggest a word can't be sounded out. Code comments may state the rule itself.
+    banned = re.compile(r"tricky|sight words?|heart words?|sneaky|whole word|irregular|memori[sz]e|doesn.t follow", re.I)
+    readme = (pathlib.Path(__file__).resolve().parent.parent / "README.md").read_text()
+    for src, text in (("index.html", html), ("README.md", readme)):
+        for line in text.splitlines():
+            if line.strip().startswith("//"):
+                continue
+            m = banned.search(line)
+            check(not m, f"{src}: banned wording {m.group(0)!r} in: {line.strip()[:90]}" if m else "")
     print("ok  data: 42 recorded clips; letter teams spell all 42 names; no ladder piece splits a team; -on sound claims match the IPA")
 
 
