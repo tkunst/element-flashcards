@@ -413,6 +413,8 @@ def connections_spelling_blank(browser):
     # --- Spelling: three views. Morphemes (default) list every name's meaning exactly once ---
     page.click('[data-tab="spell"]')
     check([b.strip() for b in page.locator("[data-spellview]").all_inner_texts()] == ["Phonemes (sounds)", "Morphemes (meaning)", "Graphemes (letters for a sound)"], "order: phonemes, morphemes, graphemes")
+    cg = page.locator('#fams .fam:has(h3:has-text("Same Spelling, Different Sound: c")) .sgroup')
+    check(cg.count() == 2 and cg.nth(0).locator(".slabel").inner_text() == "/k/" and cg.nth(1).locator(".slabel").inner_text() == "/s/", "c card should be grouped /k/ then /s/")
     check("phoneme" in page.locator("#spellDef").inner_text(), "Spelling should open on phonemes")
     check(page.locator("#tab-spell .fname.dim").count() == 0, "Spelling page should not fade any names")
     page.click('[data-spellview="morph"]')
@@ -540,6 +542,17 @@ def data_checks():
             for w in items.split():
                 n = w.replace("[", "").replace("]", "")
                 check(has(n, one_sound[key]), f"phoneme card {title!r}: {n} /{say[n]}/ has no {one_sound[key]}")
+    # Same Spelling, Different Sound cards are grouped by sound ("/k/: words | /s/: words"): every name must have its group's sound
+    for title, items in cards:
+        if not title.startswith("Same Spelling"):
+            continue
+        check(" | " in items, f"{title}: items should be grouped by sound")
+        for grp in items.split(" | "):
+            label, words = grp.split(": ", 1)
+            snd = label.strip("/")
+            for w in words.split():
+                n = w.replace("[", "").replace("]", "")
+                check(has(n, snd), f"{title}: {n} /{say[n]}/ is listed under {label}")
     stated = {  # one spelling, more than one sound: the sound each name is said to have
         "Carbon": "k", "Silicon": "k", "Calcium": "ls",
         "Hydrogen": "dʒ", "Nitrogen": "dʒ", "Oxygen": "dʒ", "Gold": "ɡ", "Argon": "ɡ", "Magnesium": "z",

@@ -158,6 +158,10 @@
   .fgroup { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
   .fgroup + .fgroup { margin-top: 26px; }
   .lat { color: #0b6e99; font-weight: 800; margin-left: 4px; }
+  .sgroup { display: grid; grid-template-columns: 3.2em 1fr; align-items: center; gap: 6px; width: 100%; padding: 4px 0; border-top: 1px dashed rgba(0,0,0,.15); }
+  .snames { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sgroup:first-child { border-top: 0; }
+  .slabel { font-family: 'Charis SIL', 'Doulos SIL', 'Gentium Plus', 'Times New Roman', serif; font-weight: 700; font-size: 1.15em; min-width: 2.6em; color: #0b6e99; }
   .olist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 14px; }
   .orow { display: flex; align-items: center; gap: 8px; font-size: .92em; }
   .opart { display: block; }
@@ -1226,13 +1230,13 @@
         ['Same Sound, Different Spelling: /aɪ/', '<b>i</b> or <b>y</b>.', '[I]ron [I]odine T[i]tanium N[i]trogen H[y]drogen'],
         ['Same Sound, Different Spelling: /i/', '<b>e</b>, <b>i</b>, or <b>y</b>.', 'H[e]lium Mangan[e]se Chlor[i]ne Brom[i]ne Sod[i]um Mercur[y]'],
         ['Same Sound, Different Spelling: /ɚ/', '<b>er</b>, <b>ur</b>, or <b>or</b>. One sound, one IPA symbol. (In Mercury the er is stressed, written /ɝ/.)', 'Copp[er] Silv[er] M[er]cury Sulf[ur] Phosph[or]us'],
-        ['Same Spelling, Different Sound: c', '<b>c</b> says /s/ before i or e, and /k/ before a, o, u, or another consonant. Calcium has both.', '[C]arbon Sili[c]on Cal[c]ium'],
-        ['Same Spelling, Different Sound: g', '<b>g</b> says /dʒ/ before e in these names (Hydrogen) and /ɡ/ before other letters (Gold).', 'Hydro[g]en Nitro[g]en Oxy[g]en [G]old Ar[g]on Ma[g]nesium'],
-        ['Same Spelling, Different Sound: s', '<b>s</b> says /s/ in Sodium and /z/ in Magnesium.', '[S]odium [S]ilicon Magne[s]ium'],
-        ['Same Spelling, Different Sound: y', '<b>y</b> says /aɪ/ in Hydrogen, /ɪ/ in Krypton and Beryllium, /ə/ in Oxygen, and /i/ at the end of Mercury.', 'H[y]drogen Kr[y]pton Ber[y]llium Ox[y]gen Mercur[y]'],
-        ['Same Spelling, Different Sound: i', '<b>i</b> says /ɪ/ in Lithium, /aɪ/ in Iron, and /i/ in Chlorine.', 'L[i]thium [I]ron Chlor[i]ne'],
+        ['Same Spelling, Different Sound: c', '<b>c</b> says /s/ before i or e, and /k/ before a, o, u, or another consonant. Calcium has both.', '/k/: [C]arbon Sili[c]on [C]alcium | /s/: Cal[c]ium'],
+        ['Same Spelling, Different Sound: g', '<b>g</b> says /dʒ/ before e in these names (Hydrogen) and /ɡ/ before other letters (Gold).', '/dʒ/: Hydro[g]en Nitro[g]en Oxy[g]en | /ɡ/: [G]old Ar[g]on Ma[g]nesium'],
+        ['Same Spelling, Different Sound: s', '<b>s</b> says /s/ in Sodium and /z/ in Magnesium.', '/s/: [S]odium [S]ilicon | /z/: Magne[s]ium'],
+        ['Same Spelling, Different Sound: y', '<b>y</b> says /aɪ/ in Hydrogen, /ɪ/ in Krypton and Beryllium, /ə/ in Oxygen, and /i/ at the end of Mercury.', '/aɪ/: H[y]drogen | /ɪ/: Kr[y]pton Ber[y]llium | /ə/: Ox[y]gen | /i/: Mercur[y]'],
+        ['Same Spelling, Different Sound: i', '<b>i</b> says /ɪ/ in Lithium, /aɪ/ in Iron, and /i/ in Chlorine.', '/ɪ/: L[i]thium | /aɪ/: [I]ron | /i/: Chlor[i]ne'],
         ['Same Spelling, Different Sound: -on', 'All spelled <b>-on</b>, and it sounds two ways: /ɑn/ in Boron, Neon, Argon, Krypton and Radon, and /ən/ in Carbon and Silicon. In Iron, i says /aɪ/ and ron says /ɚn/: /ˈaɪɚn/.',
-          'Bor[on] Ne[on] Arg[on] Krypt[on] Rad[on] Carb[on] Silic[on] Ir[on]']
+          '/ɑn/: Bor[on] Ne[on] Arg[on] Krypt[on] Rad[on] | /ən/: Carb[on] Silic[on] | /ɚn/: I[ron]']
       ]
     }
   };
@@ -1320,6 +1324,10 @@
     function cardHTML(c, i) {
       var items = c[2] === '*all' ? EL.map(function (e) { return btn(e.name, teams(e.name)); }).join('')
         : c[2] === '*latin' ? Object.keys(LATIN).map(function (n) { return btn(n, n + ' <span class="lat">' + BYZ[NAMEZ[n]].sym + ' = ' + LATIN[n] + '</span>'); }).join('')
+        : c[2].indexOf(' | ') >= 0 ? c[2].split(' | ').map(function (grp) {   // groups by sound: "/k/: words | /s/: words"
+            var k = grp.indexOf(': '), label = grp.slice(0, k), words = grp.slice(k + 2).split(' ');
+            return '<div class="sgroup"><span class="slabel">' + label + '</span><span class="snames">' + words.map(function (w) { return btn(w, marked(w, view)); }).join('') + '</span></div>';
+          }).join('')
         : c[2].split(' ').map(function (w) { return btn(w, marked(w, view)); }).join('');
       return '<div class="fam f' + (i % 9) + (c[2] === '*all' ? ' allg' : '') + '"><h3>' + c[0] + '</h3><p class="tip">' + c[1] + '</p><div class="names">' + items + '</div></div>';
     }
