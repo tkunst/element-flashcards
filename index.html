@@ -231,6 +231,7 @@
     </div>
     <div class="row">
       <button class="btn" id="gStart" type="button">Start</button>
+      <label class="lbl"><input type="checkbox" id="gEasy"> Easy round: show the row right away</label>
       <label class="lbl"><input type="checkbox" id="gTimed"> Time me</label>
       <span class="lbl" id="gTime"></span>
     </div>
@@ -373,7 +374,7 @@
   // ---------------- storage (all calls guarded) ----------------
   var KEY = 'tklearn-element-flashcards-v1';
   var storeOK = true;
-  var S = { items: {}, newDay: -1, newCount: 0, set: 'a', catMode: 'type', nameMode: 'ladder', best: {} };
+  var S = { items: {}, newDay: -1, newCount: 0, set: 'a', catMode: 'type', nameMode: 'ladder', best: {}, easyDone: {} };
   function load() {
     try {
       var raw = window.localStorage.getItem(KEY);
@@ -873,6 +874,8 @@
     document.getElementById('gStart').textContent = 'Start';
     var best = S.best[S.set];
     document.getElementById('gTime').textContent = best ? 'Best time: ' + fmt(best) : '';
+    // The first round of each element group is an easy round; after one is finished, hints wait for 2 misses.
+    document.getElementById('gEasy').checked = !(S.easyDone || {})[S.set];
   }
   function fmt(ms) { var s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function stopGame() { if (gTimer) clearInterval(gTimer); gTimer = null; g = null; }
@@ -882,7 +885,7 @@
   document.getElementById('gStart').addEventListener('click', function () {
     stopGame(); resetGameBoard();
     g = { queue: shuffle(SETS[S.set].map(function (e) { return e.z; })), misses: 0, firstTry: 0, total: SETS[S.set].length,
-      timed: document.getElementById('gTimed').checked, t0: Date.now() };
+      timed: document.getElementById('gTimed').checked, easy: document.getElementById('gEasy').checked, t0: Date.now() };
     document.getElementById('gStart').textContent = 'Restart';
     if (g.timed) gTimer = setInterval(function () { if (g) document.getElementById('gTime').textContent = fmt(Date.now() - g.t0); }, 500);
     else document.getElementById('gTime').textContent = '';
@@ -894,7 +897,13 @@
     g.misses = 0;
     var e = BYZ[g.queue[0]];
     document.getElementById('gPrompt').innerHTML = 'Find: ' + e.name;
-    document.getElementById('gStatus').textContent = (g.total - g.queue.length) + ' of ' + g.total + ' found';
+    document.getElementById('gStatus').textContent = (g.total - g.queue.length) + ' of ' + g.total + ' found' +
+      (g.easy ? '. It is in the highlighted row.' : '');
+    if (g.easy) showRow(g.queue[0]);
+  }
+  function showRow(target) {
+    var row = place(target)[0];
+    Object.keys(gCells).forEach(function (k) { if (place(+k)[0] === row) gCells[k].classList.add('rowhint'); });
   }
   function tapGame(z) {
     if (!g || !g.queue.length) return;
@@ -909,9 +918,8 @@
     g.misses++;
     gCells[z].classList.add('miss');
     setTimeout(function () { if (gCells[z]) gCells[z].classList.remove('miss'); }, 600);
-    if (g.misses === 2) {
-      var row = place(target)[0];
-      Object.keys(gCells).forEach(function (k) { if (place(+k)[0] === row) gCells[k].classList.add('rowhint'); });
+    if (g.misses === 2 && !g.easy) {
+      showRow(target);
       document.getElementById('gStatus').textContent = 'Hint: it is in the highlighted row.';
     } else if (g.misses >= 3) {
       gCells[target].classList.add('reveal');
@@ -920,7 +928,13 @@
   }
   function endGame() {
     var ms = Date.now() - g.t0, msg = 'All ' + g.total + ' found! ' + g.firstTry + ' on the first tap.';
-    if (g.timed) {
+    if (g.easy) {
+      S.easyDone = S.easyDone || {}; S.easyDone[S.set] = true; save();
+      document.getElementById('gEasy').checked = false;
+      msg += ' Next round: the row hint waits until you miss twice.';
+    }
+    if (g.timed && g.easy) { clearInterval(gTimer); gTimer = null; msg += ' (Best times count only without the easy round.)'; }
+    else if (g.timed) {
       clearInterval(gTimer); gTimer = null;
       var best = S.best[S.set];
       if (!best || ms < best) { S.best[S.set] = ms; save(); msg += ' New best time: ' + fmt(ms) + '.'; }

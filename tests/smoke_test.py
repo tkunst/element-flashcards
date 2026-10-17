@@ -161,14 +161,28 @@ def run(browser, label, viewport):
     page.click("#fcStop")
     page.click('[data-catmode="type"]')
 
-    # --- game: prompt by name, tap the right square; 3 misses reveal it ---
+    # --- game, easy round first: the row is highlighted before any tap ---
     page.click('[data-tab="game"]')
+    check(page.locator("#gEasy").is_checked(), "first round of a group should be the easy round")
     page.click("#gStart")
     name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+    check("rowhint" in page.locator(f'#gBoard [data-z="{BY_NAME[name][0]}"]').get_attribute("class"), "easy round should show the row first")
+    for _ in range(15):
+        name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+        page.click(f'#gBoard [data-z="{BY_NAME[name][0]}"]')
+    check(page.locator("#gPrompt").inner_text() == "Done!", "easy round did not finish")
+    check(not page.locator("#gEasy").is_checked(), "after an easy round the next round should be normal")
+
+    # --- normal round: no row until 2 misses; 3 misses reveal it ---
+    page.click("#gStart")
+    name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+    check(page.locator("#gBoard .rowhint").count() == 0, "normal round should not show the row before misses")
     z = BY_NAME[name][0]
     wrong = next(k for k in (37, 38, 55) if k != z)
-    for _ in range(3):
+    for i in range(3):
         page.click(f'#gBoard [data-z="{wrong}"]')
+        if i == 1:
+            check("rowhint" in page.locator(f'#gBoard [data-z="{z}"]').get_attribute("class"), "2 misses should show the row")
     check("reveal" in page.locator(f'#gBoard [data-z="{z}"]').get_attribute("class"), "3 misses should reveal the square")
     page.click(f'#gBoard [data-z="{z}"]')
     check(page.locator("#gStatus").inner_text().startswith("1 of 15 found"), "correct tap not counted")
