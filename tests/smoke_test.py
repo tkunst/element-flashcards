@@ -287,7 +287,9 @@ def sort(browser):
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(PAGE)
     page.click('[data-tab="sort"]')
+    # 1-15: rows 1-2 and Al, Si, P one by one; Na + Mg are the metal block -> 14 things to sort
     check(page.locator("#sBoard .sq.sortable").count() == 15, "set 1-15 should have 15 sortable squares")
+    check(sorted(int(x) for x in page.locator("#sBoard .sq.blk").evaluate_all("els => els.map(e => e.dataset.z)")) == [11, 12], "Na and Mg should be the block in 1-15")
 
     def tap_place(z, cat):
         page.click(f'#sBoard [data-z="{z}"]')
@@ -301,24 +303,35 @@ def sort(browser):
     page.mouse.move(sq["x"] + 40, sq["y"] + 40, steps=4)
     page.mouse.move(ov["x"] + ov["width"] / 2, ov["y"] + ov["height"] / 2, steps=8)
     page.mouse.up()
-    check(page.locator('#ovals .oval[data-c="metal"] .chip[data-z="3"]').count() == 1, "dragging Li to metal failed")
+    check(page.locator('#ovals .oval[data-c="metal"] .chip[data-u="z3"]').count() == 1, "dragging Li to metal failed")
     tap_place(5, "nonmetal")                                   # boron is a metalloid: wrong on purpose
     page.click("#sCheck")
-    check(page.locator("#sScore").inner_text().startswith("2 / 15 right"), f"sort score: {page.locator('#sScore').inner_text()}")
-    check("wrong" in page.locator('#ovals .chip[data-z="5"]').get_attribute("class"), "boron in nonmetal should be wrong")
+    check(page.locator("#sScore").inner_text().startswith("2 / 14 right"), f"sort score: {page.locator('#sScore').inner_text()}")
+    check("wrong" in page.locator('#ovals .chip[data-u="z5"]').get_attribute("class"), "boron in nonmetal should be wrong")
     page.click("#sRetry")
-    check(page.locator('#ovals .chip[data-z="5"]').count() == 0, "send wrong ones back should return boron")
+    check(page.locator('#ovals .chip[data-u="z5"]').count() == 0, "send wrong ones back should return boron")
     check("placed" not in page.locator('#sBoard [data-z="5"]').get_attribute("class"), "boron should be back on the table")
+    # the block: tapping Na and then the metal oval moves Na AND Mg as one chip
+    tap_place(11, "metal")
+    check(page.locator('#ovals .oval[data-c="metal"] .chip[data-u="blk"]').inner_text() == "2 metals", "block chip should say 2 metals")
+    check(all("placed" in page.locator(f'#sBoard [data-z="{z}"]').get_attribute("class") for z in (11, 12)), "the whole block should leave the table")
     for z in range(1, 16):
-        if z in (1, 3):
+        if z in (1, 3, 11, 12):
             continue
         tap_place(z, EL[z][2])
     page.click("#sCheck")
-    check(page.locator("#sScore").inner_text().startswith("15 / 15 right"), "all placed correctly should score 15/15")
+    check(page.locator("#sScore").inner_text().startswith("14 / 14 right"), f"all placed correctly should score 14/14: {page.locator('#sScore').inner_text()}")
     check(page.locator("#sRule").is_visible(), "the staircase rule should appear after a perfect sort")
+    # 16-30: S, Cl, Ar one by one + K..Zn as one block -> 4 things; the block in nonmetal is wrong
+    page.click('[data-set="b"]')
+    check(page.locator("#sBoard .sq.blk").count() == 12, "K through Zn should be the block in 16-30")
+    tap_place(19, "nonmetal")
+    page.click("#sCheck")
+    check(page.locator("#sScore").inner_text().startswith("0 / 4 right"), f"16-30 score: {page.locator('#sScore').inner_text()}")
+    check("wrong" in page.locator('#ovals .chip[data-u="blk"]').get_attribute("class"), "metal block in nonmetal should be wrong")
     check(not errors, f"JavaScript errors in sort: {errors}")
     ctx.close()
-    print("ok  sort: tap-place, drag, check, send back, perfect -> staircase rule")
+    print("ok  sort: tap-place, drag, check, send back, metal block moves as one, perfect -> staircase rule")
 
 
 def connections_spelling_blank(browser):

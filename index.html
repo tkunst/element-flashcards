@@ -123,6 +123,8 @@
   .chip.wrong { border-color: var(--wrong); background: #fde8e6; }
   .sq.sortable { cursor: grab; touch-action: none; background: #fff; }
   .sq.placed { visibility: hidden; }
+  .sq.sortable.blk { background: #e8f1ff; border: 2px solid #6d93c9; }
+  .chip.blkchip { background: #e8f1ff; }
   .sq.pick, .chip.pick { outline: 3px solid #f0a500; }
   .ghost { position: fixed; pointer-events: none; z-index: 10; font-weight: 800; padding: 6px 10px; border: 2px solid var(--orange); border-radius: 6px; background: #fff; transform: translate(-50%, -50%); }
   .cx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -239,6 +241,7 @@
   <div class="panel" id="tab-sort" hidden>
     <div class="prompt">Metal, metalloid, or nonmetal?</div>
     <p class="note" style="margin-top:0">Drag each element from the table into its oval (or tap the element, then tap the oval). Then check.</p>
+    <p class="note" id="sBlockNote" style="margin-top:0">The light-blue squares are one big block: grab any of them and the whole block moves together.</p>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="sCheck" type="button">Check</button>
       <button class="btn alt" id="sRetry" type="button" hidden>Send wrong ones back</button>
@@ -825,7 +828,20 @@
   }
 
   // ---------------- Sort: drag from the table into metal / metalloid / nonmetal ovals ----------------
-  var sCells = {}, sPlaced = {}, sPicked = null, sDrag = null;   // sPlaced[z] = oval category it was put in
+  // Each draggable thing is a "unit": one element ('z5'), or the metal block ('blk') = the left-side metals
+  // (Na, Mg, K through Zn, Ag, Pt, Au, Hg, U, Pu), which move together so the sort stays quick.
+  // Rows 1-2 and the elements near the staircase (Al, Si, P, S, Cl, Ar, Kr, Br, I, Rn, Sn, Pb) stay one by one.
+  var BLOCK = { 11: 1, 12: 1, 19: 1, 20: 1, 21: 1, 22: 1, 23: 1, 24: 1, 25: 1, 26: 1, 27: 1, 28: 1, 29: 1, 30: 1, 47: 1, 78: 1, 79: 1, 80: 1, 92: 1, 94: 1 };
+  var sCells = {}, sPlaced = {}, sPicked = null, sDrag = null;   // sPlaced[unit] = oval category it was put in
+  function unitOf(z) { return BLOCK[z] ? 'blk' : 'z' + z; }
+  function members(u) { return u === 'blk' ? SETS[S.set].filter(function (e) { return BLOCK[e.z]; }).map(function (e) { return e.z; }) : [+u.slice(1)]; }
+  function unitCat(u) { return u === 'blk' ? 'metal' : BYZ[+u.slice(1)].cat; }
+  function unitLabel(u) { return u === 'blk' ? members(u).length + ' metals' : BYZ[+u.slice(1)].sym; }
+  function unitsInSet() {
+    var seen = {}, out = [];
+    SETS[S.set].forEach(function (e) { var u = unitOf(e.z); if (!seen[u]) { seen[u] = 1; out.push(u); } });
+    return out;
+  }
   function resetSort() {
     sPlaced = {}; sPicked = null;
     sCells = buildBoard(document.getElementById('sBoard'), {});
@@ -833,15 +849,18 @@
     Object.keys(sCells).forEach(function (k) {
       var z = +k, n = sCells[z];
       if (!inSet[z]) { n.style.opacity = '.3'; return; }
+      var u = unitOf(z);
       n.classList.add('sortable');
+      if (u === 'blk') n.classList.add('blk');
       n.setAttribute('role', 'button');
-      n.setAttribute('aria-label', BYZ[z].name + ', ' + BYZ[z].sym);
-      n.addEventListener('pointerdown', function (ev) { startSortDrag(ev, z, n); });
+      n.setAttribute('aria-label', u === 'blk' ? 'Metal block: ' + members(u).map(function (m) { return BYZ[m].name; }).join(', ') : BYZ[z].name + ', ' + BYZ[z].sym);
+      n.addEventListener('pointerdown', function (ev) { startSortDrag(ev, u, n); });
     });
     [].forEach.call(document.querySelectorAll('#ovals .in'), function (x) { x.innerHTML = ''; });
     document.getElementById('sScore').textContent = '';
     document.getElementById('sRetry').hidden = true;
     document.getElementById('sRule').hidden = true;
+    document.getElementById('sBlockNote').hidden = !members('blk').length;
   }
   function clearSortMarks() {
     [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) { c.classList.remove('right', 'wrong'); });
@@ -852,32 +871,38 @@
     sPicked = null;
     [].forEach.call(document.querySelectorAll('#tab-sort .pick'), function (x) { x.classList.remove('pick'); });
   }
-  function placeIn(z, cat) {
+  function pickUnit(u, src) {
+    unpickSort(); sPicked = u;
+    if (src.classList.contains('chip')) src.classList.add('pick');
+    else members(u).forEach(function (m) { sCells[m].classList.add('pick'); });
+  }
+  function placeIn(u, cat) {
     clearSortMarks();
-    removeChip(z);
-    sPlaced[z] = cat;
-    sCells[z].classList.add('placed');
+    removeChip(u);
+    sPlaced[u] = cat;
+    members(u).forEach(function (m) { sCells[m].classList.add('placed'); });
     var chip = document.createElement('button');
-    chip.type = 'button'; chip.className = 'chip'; chip.textContent = BYZ[z].sym; chip.setAttribute('data-z', z);
-    chip.title = BYZ[z].name;
-    chip.addEventListener('pointerdown', function (ev) { startSortDrag(ev, z, chip); });
+    chip.type = 'button'; chip.className = 'chip' + (u === 'blk' ? ' blkchip' : ''); chip.textContent = unitLabel(u); chip.setAttribute('data-u', u);
+    chip.title = members(u).map(function (m) { return BYZ[m].name; }).join(', ');
+    chip.addEventListener('pointerdown', function (ev) { startSortDrag(ev, u, chip); });
     document.querySelector('#ovals .oval[data-c="' + cat + '"] .in').appendChild(chip);
   }
-  function removeChip(z) {
-    var old = document.querySelector('#ovals .chip[data-z="' + z + '"]');
+  function removeChip(u) {
+    var old = document.querySelector('#ovals .chip[data-u="' + u + '"]');
     if (old) old.parentNode.removeChild(old);
   }
-  function backToTable(z) {
-    clearSortMarks(); removeChip(z); delete sPlaced[z]; sCells[z].classList.remove('placed');
+  function backToTable(u) {
+    clearSortMarks(); removeChip(u); delete sPlaced[u];
+    members(u).forEach(function (m) { sCells[m].classList.remove('placed'); });
   }
   function ovalAt(x, y) {
     var el = document.elementFromPoint(x, y);
     while (el && !(el.classList && el.classList.contains('oval'))) el = el.parentNode;
     return el && el.classList ? el : null;
   }
-  function startSortDrag(ev, z, src) {
+  function startSortDrag(ev, u, src) {
     if (ev.button !== undefined && ev.button !== 0) return;
-    sDrag = { z: z, src: src, x0: ev.clientX, y0: ev.clientY, moved: false, ghost: null, over: null };
+    sDrag = { u: u, src: src, x0: ev.clientX, y0: ev.clientY, moved: false, ghost: null, over: null };
     try { src.setPointerCapture(ev.pointerId); } catch (e) {}
     src.addEventListener('pointermove', onSortMove);
     src.addEventListener('pointerup', onSortUp);
@@ -888,8 +913,9 @@
     if (!d.moved && Math.abs(ev.clientX - d.x0) + Math.abs(ev.clientY - d.y0) < 8) return;
     if (!d.moved) {
       d.moved = true; unpickSort();
-      d.ghost = document.createElement('div'); d.ghost.className = 'ghost'; d.ghost.textContent = BYZ[d.z].sym;
+      d.ghost = document.createElement('div'); d.ghost.className = 'ghost'; d.ghost.textContent = unitLabel(d.u);
       document.body.appendChild(d.ghost);
+      if (d.u === 'blk' && !d.src.classList.contains('chip')) members('blk').forEach(function (m) { sCells[m].classList.add('pick'); });
     }
     ev.preventDefault();
     d.ghost.style.left = ev.clientX + 'px'; d.ghost.style.top = ev.clientY + 'px';
@@ -908,37 +934,38 @@
     sDrag = null;
     return d;
   }
-  function onSortCancel() { endSortDrag(); }
+  function onSortCancel() { endSortDrag(); unpickSort(); }
   function onSortUp(ev) {
     var d = endSortDrag(); if (!d) return;
     if (d.moved) {
+      unpickSort();
       var o = ovalAt(ev.clientX, ev.clientY);
-      if (o) placeIn(d.z, o.getAttribute('data-c'));
-      else if (sPlaced[d.z] && d.src.classList.contains('chip')) backToTable(d.z);
+      if (o) placeIn(d.u, o.getAttribute('data-c'));
+      else if (sPlaced[d.u] && d.src.classList.contains('chip')) backToTable(d.u);
       return;
     }
     // a tap: pick it up (tap an oval next), or tap a picked chip again to send it back
-    if (sPicked === d.z) { if (sPlaced[d.z]) backToTable(d.z); unpickSort(); return; }
-    unpickSort(); sPicked = d.z; d.src.classList.add('pick');
+    if (sPicked === d.u) { if (sPlaced[d.u]) backToTable(d.u); unpickSort(); return; }
+    pickUnit(d.u, d.src);
   }
   [].forEach.call(document.querySelectorAll('#ovals .oval'), function (o) {
     o.addEventListener('click', function (ev) {
       if (sPicked == null || (ev.target.classList && ev.target.classList.contains('chip'))) return;
-      var z = sPicked; unpickSort(); placeIn(z, o.getAttribute('data-c'));
+      var u = sPicked; unpickSort(); placeIn(u, o.getAttribute('data-c'));
     });
   });
   document.getElementById('sCheck').addEventListener('click', function () {
-    var right = 0, wrong = 0, left = SETS[S.set].filter(function (e) { return !sPlaced[e.z]; }).length;
+    var units = unitsInSet(), right = 0, wrong = 0, left = units.filter(function (u) { return !sPlaced[u]; }).length;
     [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) {
-      var z = +c.getAttribute('data-z'), ok = sPlaced[z] === BYZ[z].cat;
+      var u = c.getAttribute('data-u'), ok = sPlaced[u] === unitCat(u);
       c.classList.add(ok ? 'right' : 'wrong'); if (ok) right++; else wrong++;
     });
-    document.getElementById('sScore').textContent = right + ' / ' + SETS[S.set].length + ' right' + (left ? ' · ' + left + ' still on the table' : '');
+    document.getElementById('sScore').textContent = right + ' / ' + units.length + ' right' + (left ? ' · ' + left + ' still on the table' : '');
     document.getElementById('sRetry').hidden = !wrong;
     if (!wrong && !left) document.getElementById('sRule').hidden = false;
   });
   document.getElementById('sRetry').addEventListener('click', function () {
-    Object.keys(sPlaced).forEach(function (k) { if (sPlaced[k] !== BYZ[k].cat) backToTable(+k); });
+    Object.keys(sPlaced).forEach(function (u) { if (sPlaced[u] !== unitCat(u)) backToTable(u); });
     [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) { c.classList.add('right'); });
   });
   document.getElementById('sReset').addEventListener('click', resetSort);
