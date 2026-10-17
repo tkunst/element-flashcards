@@ -220,11 +220,6 @@
         <button class="pill" type="button" data-namemode="ladder">Step by step</button>
         <button class="pill" type="button" data-namemode="type">Always type (quiz practice)</button>
       </div>
-      <div class="row">
-        <span class="lbl">Metal / nonmetal / metalloid:</span>
-        <button class="pill" type="button" data-catmode="type">Type it</button>
-        <button class="pill" type="button" data-catmode="tap">Tap a color</button>
-      </div>
       <p class="note">Each element has two cards: <b>symbol → name</b> and <b>name → symbol</b>. Get a card right and it comes back after a longer gap (1, 2, 4, then 7 days). Miss it and it comes back in a few cards, and again tomorrow. A review takes about 10 minutes. Up to 12 new cards are added per day.</p>
       <p class="note"><b>Step by step:</b> a new or missed card starts easy (pick the real spelling), then you build the name from pieces, then you type it with nothing to help, like the real quiz. Each right answer moves the card up a step. A card only counts as solid after you've typed it.</p>
     </div>
@@ -456,7 +451,7 @@
   // ---------------- storage (all calls guarded) ----------------
   var KEY = 'tklearn-element-flashcards-v1';
   var storeOK = true;
-  var S = { items: {}, newDay: -1, newCount: 0, set: 'a', catMode: 'type', nameMode: 'ladder', best: {}, easyDone: {} };
+  var S = { items: {}, newDay: -1, newCount: 0, set: 'a', nameMode: 'ladder', best: {}, easyDone: {} };
   function load() {
     try {
       var raw = window.localStorage.getItem(KEY);
@@ -530,13 +525,7 @@
     if (a.toLowerCase() === e.sym.toLowerCase()) return 'close';
     return 'wrong';
   }
-  function checkCat(input, e) {
-    var a = norm(input);
-    if (!a) return 'wrong';
-    if (a === e.cat) return 'right';
-    if (['metal', 'nonmetal', 'metalloid'].indexOf(a) >= 0) return 'wrong';
-    return lev(a, e.cat) <= 2 && lev(a, e.cat) < Math.min(lev(a, e.cat === 'metal' ? 'nonmetal' : 'metal'), lev(a, e.cat === 'metalloid' ? 'nonmetal' : 'metalloid')) ? 'close' : 'wrong';
-  }
+
 
   // ---------------- board rendering ----------------
   function buildBoard(container, opts) {
@@ -578,11 +567,6 @@
     renderHome(); renderProgress(); resetGameBoard(); resetSort(); cx = null; if (tab === 'cx') newCx(); renderFams();
   }
   [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.addEventListener('click', function () { setSet(b.getAttribute('data-set')); }); });
-  function setCatMode(m) {
-    S.catMode = m; save();
-    [].forEach.call(document.querySelectorAll('[data-catmode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-catmode') === m); });
-  }
-  [].forEach.call(document.querySelectorAll('[data-catmode]'), function (b) { b.addEventListener('click', function () { setCatMode(b.getAttribute('data-catmode')); }); });
   function setNameMode(m) {
     S.nameMode = m; save();
     [].forEach.call(document.querySelectorAll('[data-namemode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-namemode') === m); });
@@ -661,13 +645,10 @@
       } else {
         html += input('name', 'Name');
       }
-      if (S.catMode === 'tap') {
-        html += '<div class="field" id="f-cat"><label>Metal, nonmetal, or metalloid?</label><div class="cats">' +
-          ['metal', 'nonmetal', 'metalloid'].map(function (c) { return '<button type="button" class="cat" data-c="' + c + '">' + c + '</button>'; }).join('') +
-          '</div><div class="fb" id="fb-cat"></div></div>';
-      } else {
-        html += input('cat', 'Metal, nonmetal, or metalloid?');
-      }
+      // metal / nonmetal / metalloid: always tap one of three colored buttons (paper-card colors)
+      html += '<div class="field" id="f-cat"><label>Metal, nonmetal, or metalloid?</label><div class="cats">' +
+        ['metal', 'nonmetal', 'metalloid'].map(function (c) { return '<button type="button" class="cat" data-c="' + c + '">' + c + '</button>'; }).join('') +
+        '</div><div class="fb" id="fb-cat"></div></div>';
       document.getElementById('fcInputs').innerHTML = html;
       [].forEach.call(document.querySelectorAll('#fcInputs .opt'), function (b) {
         b.addEventListener('click', function () {
@@ -753,15 +734,8 @@
       }
       results.push(rn);
       var rc;
-      if (S.catMode === 'tap') {
-        rc = run.catSel === e.cat ? 'right' : 'wrong';
-        if (!run.catSel) rc = 'wrong';
-        mark('cat', rc, rc === 'right' ? 'Right.' : '');
-      } else {
-        rc = checkCat(document.getElementById('in-cat').value, e);
-        if (rc === 'close') { rc = 'right'; mark('cat', 'right', 'Counts! It is spelled ' + e.cat + '.'); }
-        else mark('cat', rc, rc === 'right' ? 'Right.' : '');
-      }
+      rc = run.catSel === e.cat ? 'right' : 'wrong';
+      mark('cat', rc, rc === 'right' ? 'Right.' : '');
       results.push(rc);
     } else {
       var rs = checkSym(document.getElementById('in-sym').value, e);
@@ -1387,7 +1361,6 @@
   });
 
   // ---------------- start ----------------
-  setCatMode(S.catMode === 'tap' ? 'tap' : 'type');
   setNameMode(S.nameMode === 'type' ? 'type' : 'ladder');
   setSet(S.set);
   setTab('cards');

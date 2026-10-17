@@ -66,7 +66,7 @@ def answer(page, right=True, misspell=False, wrong_case=False):
         if misspell:
             nm = name[:-1] + ("x" if name[-1] != "x" else "y")
         page.fill("#in-name", nm.lower())
-        page.fill("#in-cat", cat)
+        page.click(f'#fcInputs .cat[data-c="{cat}"]')
     else:
         page.fill("#in-sym", sym.lower() if wrong_case else (sym if right else "Zz"))
     page.click("#fcCheck")
@@ -155,21 +155,21 @@ def run(browser, label, viewport):
         raise AssertionError("no name -> symbol card found in practice")
     page.click("#fcStop")
 
-    # --- category by tapping colors ---
-    page.click('[data-catmode="tap"]')
+    # --- category: tap a color only (no typing option) ---
+    check(page.locator("[data-catmode]").count() == 0 and page.locator("#in-cat").count() == 0, "category must be tap-only")
     page.click("#startPractice")
     for _ in range(4):
         d, z = current(page)
         if d == "s":
-            page.fill("#in-name", EL[z][1])
-            page.click(f'#fcInputs .cat[data-c="{EL[z][2]}"]')
+            wrongcat = next(c for c in ("metal", "nonmetal", "metalloid") if c != EL[z][2])
+            page.fill("#in-name", EL[z][1]) if page.locator("#in-name").count() else None
+            page.click(f'#fcInputs .cat[data-c="{wrongcat}"]')
             page.click("#fcCheck")
-            check("right" in page.locator(".result").get_attribute("class"), "tap-a-color answer not graded right")
+            check("wrong" in page.locator(".result").get_attribute("class"), "wrong color should be graded wrong")
             break
         answer(page)
         page.click("#fcNext")
     page.click("#fcStop")
-    page.click('[data-catmode="type"]')
 
     # --- game, easy round first: the row is highlighted before any tap ---
     page.click('[data-tab="game"]')
@@ -234,7 +234,7 @@ def ladder(browser):
     opts = page.locator("#fcInputs .opt").all_inner_texts()
     check(len(opts) == 3 and opts.count("Hydrogen") == 1, f"step 1 options wrong: {opts}")
     page.click('#fcInputs .opt:not([data-o="Hydrogen"])')
-    page.fill("#in-cat", "nonmetal")
+    page.click('#fcInputs .cat[data-c="nonmetal"]')
     page.click("#fcCheck")
     check("wrong" in page.locator(".result").get_attribute("class"), "picking a misspelling should be wrong")
     check(stored(page)["items"]["1s"]["b"] == 1, "a miss at step 1 keeps the card at box 1")
@@ -249,7 +249,7 @@ def ladder(browser):
     due(2)
     for t in ("hy", "gen", "dro"):                     # wrong order is wrong, and drops the card to box 1
         page.click(f'#tiles .tile[data-t="{t}"]')
-    page.fill("#in-cat", "nonmetal")
+    page.click('#fcInputs .cat[data-c="nonmetal"]')
     page.click("#fcCheck")
     check("wrong" in page.locator(".result").get_attribute("class"), "pieces in the wrong order should be wrong")
     check(stored(page)["items"]["1s"]["b"] == 1, "a miss at step 2 should drop the card to box 1")
@@ -261,7 +261,7 @@ def ladder(browser):
     page.click("#built .tile")                        # ...tapped again goes back
     for t in ("hy", "dro", "gen"):
         page.click(f'#tiles .tile[data-t="{t}"]')
-    page.fill("#in-cat", "nonmetal")
+    page.click('#fcInputs .cat[data-c="nonmetal"]')
     page.click("#fcCheck")
     check("right" in page.locator(".result").get_attribute("class"), "built name should be right")
     check(stored(page)["items"]["1s"]["b"] == 3, "right at step 2 should move the card to box 3")
@@ -270,7 +270,7 @@ def ladder(browser):
     due(3)
     check("Step 3" in page.locator("#fcStep").inner_text(), "box 3 card should be typed")
     page.fill("#in-name", "hydrogin")
-    page.fill("#in-cat", "nonmetal")
+    page.click('#fcInputs .cat[data-c="nonmetal"]')
     page.click("#fcCheck")
     check("right" in page.locator(".result").get_attribute("class"), "near miss should count at step 3")
     check(stored(page)["items"]["1s"]["b"] == 4, "typed right should move the card to box 4 (solid)")
