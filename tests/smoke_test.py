@@ -382,27 +382,32 @@ def connections_spelling_blank(browser):
     labels = page.locator("#cxSolved .lab").all_inner_texts()
     check("Halogens" in labels and "Noble gases" in labels, f"family labels: {labels}")
 
-    # --- Spelling families: every one of the 42 names exactly once (plus the sneaky-y strip) ---
+    # --- Spelling: three views. Morphemes (default) list every name's meaning exactly once ---
     page.click('[data-tab="spell"]')
-    fam_names = page.locator("#fams .fam:not(.f8) .fname").all_inner_texts()
-    check(sorted(fam_names) == sorted(v[1] for v in EL.values()), "spelling families must list each of the 42 names once")
-    check(page.locator('#fams .fname:has-text("Beryllium") b').first.inner_text() == "ll", "tricky letters not marked")
-    page.click('#fams .fname:has-text("Potassium")')
-    check("K · Potassium · 19" in page.locator("#fdetail").inner_text(), "tapping a name should show its details")
+    check("morpheme" in page.locator("#spellDef").inner_text(), "Spelling should open on morphemes")
+    origins = page.locator("#fams .origins .fname").all_inner_texts()
+    check(sorted(origins) == sorted(v[1] for v in EL.values()), "Where each name comes from must list all 42 names once")
+    check(page.locator('#fams .fname:has-text("Hydrogen") b').first.inner_text() == "gen", "morpheme -gen not marked in Hydrogen")
+    page.click('#fams .origins .fname:has-text("Potassium")')
+    det = page.locator("#fdetail").inner_text()
+    check("K · Potassium · 19" in det and "potash" in det, "tapping a name should show its details and meaning")
     page.click("#fdetail .play")
     page.wait_for_function("() => { const a = window.__tklearn.audio(); return a && (a.readyState >= 2 || a.error); }", timeout=10000)
     check(page.evaluate("() => !window.__tklearn.audio().error && window.__tklearn.audio().src.endsWith('/audio/19-potassium.mp3')"), "Spelling detail should play potassium")
-    check("poh-TASS-ee-um" in page.locator("#fdetail").inner_text() and "/poʊˈtæsiəm/" in page.locator("#fdetail").inner_text(), "details should show how it sounds")
-    check(page.locator('#fdetail .sq.hit[data-z="19"]').count() == 1, "detail map should mark potassium")
-
-    # --- Letter-teams view: multi-letter teams boxed, split teams dashed ---
-    page.click('[data-spellview="graphemes"]')
-    check(page.locator("#glegend").is_visible(), "letter-teams legend should show")
-    phos = page.locator('#fams .fam:not(.f8) .fname:has-text("Phosphorus")')
-    check(phos.locator(".gr.multi").all_inner_texts() == ["Ph", "ph", "or"], "Phosphorus teams should be Ph, ph, or")
-    check(page.locator('#fams .fname:has-text("Chlorine") .gr.split').all_inner_texts() == ["i", "e"], "Chlorine should show the i_e split team")
-    check(sorted(page.locator("#fams .fam:not(.f8) .fname").all_inner_texts()) == sorted(v[1] for v in EL.values()), "letter-teams view must still spell all 42 names")
-    page.click('[data-spellview="marks"]')
+    check("poh-TASS-ee-um" in det and "/poʊˈtæsiəm/" in det, "details should show how it sounds")
+    # Graphemes: boxes; consonant + e is one grapheme (EBLI style), no "_" notation
+    page.click('[data-spellview="graph"]')
+    check("1 to 4 letters" in page.locator("#spellDef").inner_text(), "grapheme definition missing")
+    allg = page.locator("#fams .allg .fname")
+    check(sorted(allg.all_inner_texts()) == sorted(v[1] for v in EL.values()), "all-42 grapheme card must spell all 42 names")
+    check(page.locator('#fams .allg .fname:has-text("Phosphorus") .gr.multi').all_inner_texts() == ["Ph", "ph", "or"], "Phosphorus graphemes should be Ph, ph, or")
+    check(page.locator('#fams .allg .fname:has-text("Chlorine") .gr.multi').all_inner_texts() == ["Ch", "or", "ne"], "Chlorine should end in the ne grapheme")
+    check("_" not in page.locator("#tab-spell").inner_text(), "no underscore notation")
+    # Phonemes: one sound/many spellings and one spelling/many sounds
+    page.click('[data-spellview="phon"]')
+    check("more than one spelling" in page.locator("#spellDef").inner_text(), "phoneme definition missing")
+    check(page.locator('#fams .fam').first.locator('.fname b').all_inner_texts() == ["C", "C", "C", "c", "K", "Ch", "Ch", "ck", "c"], "the /k/ card should mark each spelling")
+    page.click('[data-spellview="morph"]')
 
     # --- Find the Elements on a blank board: no symbols until found ---
     page.click('[data-tab="game"]')
@@ -426,13 +431,14 @@ def connections_spelling_blank(browser):
 def data_checks():
     """Static checks on the page's data: letter teams spell each name, and ladder pieces never split a team."""
     html = (pathlib.Path(__file__).resolve().parent.parent / "index.html").read_text()
-    graph = dict(re.findall(r"(\w+): '([A-Za-z* ]+)'", html[html.index("var GRAPH = {"):html.index("function teams")]))
+    graph = dict(re.findall(r"(\w+): '([A-Za-z* ]+)'", html[html.index("var GRAPH = {"):html.index("// How each name sounds")]))
     ladder = {int(z): ch for z, ch in re.findall(r"(\d+): \['([a-z ]+)',", html[html.index("var LADDER = {"):html.index("EL.forEach(function (e) {\n    var L")])}
     check(sorted(graph) == sorted(v[1] for v in EL.values()), "letter teams must cover all 42 names")
     check(sorted(ladder) == sorted(EL), "ladder must cover all 42 elements")
     for z, (_, name, _) in EL.items():
         toks = graph[name].split()
-        check("".join(t.replace("*", "") for t in toks) == name, f"letter teams don't spell {name}")
+        check("".join(toks) == name, f"graphemes don't spell {name}")
+        check(all(1 <= len(t) <= 4 for t in toks), f"{name}: a grapheme must be 1-4 letters")
         bad, pos, split_start = set(), 0, None
         for t in toks:
             letters = t.replace("*", "")
@@ -450,11 +456,11 @@ def data_checks():
     # Pronunciations (IPA, checked against the CMU Pronouncing Dictionary when written) back the tips' sound claims.
     say = dict(re.findall(r"(\w+): \['([^']+)', '[^']+'\]", html[html.index("var SAY = {"):html.index("function teams")]))
     check(sorted(say) == sorted(v[1] for v in EL.values()), "every name needs a pronunciation")
-    tip = re.search(r"\['-on', '([^']+)'", html).group(1)
+    tip = re.search(r"All spelled <b>-on</b>([^']+)'", html).group(1)
     for n in ("Boron", "Neon", "Argon", "Krypton", "Radon"):
-        check(n in tip.split('"ahn"')[1].split('"un"')[0] and say[n].endswith("ɑn"), f"-on tip: {n} should be listed as and sound like 'ahn'")
+        check(n in tip.split("/ɑn/")[1].split("/ən/")[0] and say[n].endswith("ɑn"), f"-on tip: {n} should be listed under /ɑn/ and end in /ɑn/")
     for n in ("Carbon", "Silicon"):
-        check(n in tip.split('"un"')[1] and say[n].endswith("ən"), f"-on tip: {n} should be listed as and sound like 'un'")
+        check(n in tip.split("/ən/")[1] and say[n].endswith("ən"), f"-on tip: {n} should be listed under /ən/ and end in /ən/")
     # Every element has its recorded clip: audio/NN-name.mp3, a real MP3.
     for z, (_, name, _) in EL.items():
         clip = pathlib.Path(__file__).resolve().parent.parent / "audio" / f"{z:02d}-{name.lower()}.mp3"
@@ -471,7 +477,34 @@ def data_checks():
                 continue
             m = banned.search(line)
             check(not m, f"{src}: banned wording {m.group(0)!r} in: {line.strip()[:90]}" if m else "")
-    print("ok  data: 42 recorded clips; letter teams spell all 42 names; no ladder piece splits a team; -on sound claims match the IPA")
+    # Every phoneme-card claim must be true in the page's American IPA (SAY, checked against CMU):
+    # "/x/: one sound ..." cards -> every listed name contains /x/; one-spelling cards -> each name has the stated sound.
+    ph = html[html.index("    phon: {"):html.index("  // Where each name comes from")]
+    cards = re.findall(r"\['([^']+)', '(?:[^'\\]|\\.)*',\s*'([^']+)'\]", ph)
+    check(len(cards) == 14, f"expected the phoneme cards, found {len(cards)}")
+    def has(name, sound):
+        ipa = say[name].replace("ˈ", "").replace("ɜr", "ər")
+        if sound == "ɪ":  # short i on its own, not the second half of /aɪ/, /eɪ/, /ɔɪ/
+            ipa = ipa.replace("aɪ", "").replace("eɪ", "").replace("ɔɪ", "")
+        return sound in ipa
+    one_sound = {"/k/": "k", "/f/": "f", "/s/": "s", "/z/": "z", "/ɪ/": "ɪ", "/aɪ/": "aɪ", "/i/": "i", "/ər/": "ər"}
+    for title, items in cards:
+        key = title.split(":")[0]
+        if key in one_sound:
+            for w in items.split():
+                n = w.replace("[", "").replace("]", "")
+                check(has(n, one_sound[key]), f"phoneme card {title!r}: {n} /{say[n]}/ has no {one_sound[key]}")
+    stated = {  # one spelling, more than one sound: the sound each name is said to have
+        "Carbon": "k", "Silicon": "k", "Calcium": "ls",
+        "Hydrogen": "dʒ", "Nitrogen": "dʒ", "Oxygen": "dʒ", "Gold": "ɡ", "Argon": "ɡ", "Magnesium": "z",
+        "Sodium": "s", "Krypton": "ɪp", "Beryllium": "rɪ", "Mercury": "ri", "Lithium": "lɪ", "Iron": "aɪ", "Chlorine": "rin",
+    }
+    for n, snd in stated.items():
+        check(has(n, snd), f"sound claim: {n} /{say[n]}/ should contain {snd}")
+    check(say["Hydrogen"].replace("ˈ", "").startswith("haɪ") and "ksə" in say["Oxygen"], "y claims: Hydrogen 'eye', Oxygen 'uh'")
+    origin = dict(re.findall(r"(\w+): '([^']+)'", html[html.index("var ORIGIN = {"):html.index("var NAMEZ")]))
+    check(sorted(origin) == sorted(v[1] for v in EL.values()), "every name needs a meaning (ORIGIN)")
+    print("ok  data: 42 recorded clips; phoneme claims match the IPA; graphemes (1-4 letters) spell all 42 names; no ladder piece splits a team; -on sound claims match the IPA")
 
 
 def blocked_storage(browser):

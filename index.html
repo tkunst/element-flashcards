@@ -149,7 +149,10 @@
   .fname.dim { opacity: .4; }
   .gr { display: inline-block; }
   .gr.multi { border: 2px solid #2c5aa0; border-radius: 5px; background: #fff; padding: 0 3px; margin: 0 1px; }
-  .gr.split { border: 2px dashed #b3261e; border-radius: 5px; padding: 0 2px; margin: 0 1px; }
+  .olist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 14px; }
+  .orow { display: flex; align-items: center; gap: 8px; font-size: .92em; }
+  .orow .fname { min-width: 7.5em; text-align: left; }
+  .fam.origins { grid-column: 1 / -1; }
   .glegend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .9em; color: var(--soft); margin: 0 0 10px; }
   .fdetail { margin-top: 12px; }
   .play { font: inherit; font-size: .9em; font-weight: 700; padding: 4px 12px; margin-left: 8px; border: 2px solid var(--blue); border-radius: 999px; background: #fff; color: var(--blue); cursor: pointer; vertical-align: middle; }
@@ -302,20 +305,16 @@
     </div>
   </div>
 
-  <!-- SPELLING FAMILIES -->
+  <!-- SPELLING -->
   <div class="panel" id="tab-spell" hidden>
-    <div class="prompt">Spelling families</div>
-    <p class="note" style="margin-top:0">The 42 names fall into a few families that share an ending. Learn each ending, then notice the letters in <b style="color:#b3261e;text-decoration:underline">red</b>: they show which spelling the name uses for that sound. Tap a name to see its symbol and where it lives. Names outside the element group you picked are faded.</p>
-    <div class="row" style="margin-top:10px">
-      <span class="lbl">Show:</span>
-      <button class="pill" type="button" data-spellview="marks">Letters to notice</button>
-      <button class="pill" type="button" data-spellview="graphemes">Letter teams</button>
+    <div class="prompt">Spelling: meaning, letters, sounds</div>
+    <div class="row" style="margin-top:6px">
+      <button class="pill" type="button" data-spellview="morph">Morphemes (meaning)</button>
+      <button class="pill" type="button" data-spellview="graph">Graphemes (letters for a sound)</button>
+      <button class="pill" type="button" data-spellview="phon">Phonemes (sounds)</button>
     </div>
-    <div class="glegend" id="glegend" hidden>
-      <span><span class="gr multi">ph</span> letters that team up to spell one sound</span>
-      <span><span class="gr split">i</span>n<span class="gr split">e</span> a split team: two letters apart that work together (the e makes the i say "ee" or "eye")</span>
-      <span><b>Iron</b>: i says "eye", and r-o-n is said "ern" (EYE-ern)</span>
-    </div>
+    <p class="note" id="spellDef" style="margin-top:0"></p>
+    <p class="note" style="margin-top:0">Tap any name to hear it and see its graphemes, meaning, and spot on the table. Names outside the element group you picked are faded.</p>
     <div class="fams" id="fams"></div>
     <div class="fdetail" id="fdetail"></div>
   </div>
@@ -1159,35 +1158,86 @@
   });
 
   // ---------------- Spelling families ----------------
-  // [family, tip, names with the letters to notice in [brackets]]
+  // ---------------- Spelling: morphemes (meaning), graphemes (letters for one sound), phonemes (sounds) ----------------
   // Wording rule: always explain which letters spell which sound. Never call letters "tricky" or a word
   // a "sight word"/"heart word", and never suggest a word can't be sounded out.
-  var SPELL = [
-    ['-ium', 'Most of the metals here end in <b>-ium</b> ("ee-um"). Beryllium spells its "l" sound with <b>ll</b>, and Potassium spells its "s" sound with <b>ss</b>. In Chromium, <b>ch</b> spells the "k" sound, like in chorus.',
-      'Helium Lithium Bery[ll]ium Sodium Magnesium Pota[ss]ium Calcium Scandium Titanium Vanadium [Ch]romium Uranium Plutonium'],
-    ['-inum', 'These two end <b>-num</b> with no i before it, and you can hear that: uh-LOO-mih-<b>num</b>, PLAT-uh-<b>num</b> have no "ee" sound before the "um".', 'Alumi[num] Plati[num]'],
-    ['-ine', 'All four are <b>halogens</b>. In Fluorine, <b>uor</b> spells "oor" (FLOOR-een). In Chlorine, <b>ch</b> spells the "k" sound.', 'Fl[uo]rine [Ch]lorine Bromine Iodine'],
-    ['-on', 'All spelled <b>-on</b>, and it sounds two ways: "ahn" in Boron, Neon, Argon, Krypton and Radon, and a quick "un" in Carbon and Silicon. In Krypton, <b>y</b> spells the short i sound. In Iron, i says "eye" and <b>ron</b> is said "ern": EYE-ern.', 'Boron Carbon Neon Silicon Argon Kr[y]pton Radon I[ron]'],
-    ['-gen', '<b>-gen</b> means "maker": hydrogen = water-maker, oxygen = acid-maker, nitrogen = maker of niter. Two use a <b>y</b>: it spells "eye" in Hydrogen and a quick "uh" in Oxygen.', 'H[y]drogen Nitrogen Ox[y]gen'],
-    ['-er / -ur', 'Copper and Silver spell their ending "er" sound with <b>er</b>. Sulfur spells it with <b>ur</b>: sul-fur, a u in both parts.', 'Copp[er] Silv[er] Sulf[ur]'],
-    ['short and old', 'Short names, used for thousands of years. Zinc spells its last "k" sound with <b>c</b>. In Lead, <b>ea</b> spells short e, like in bread and head.', 'Tin Zin[c] Gold L[ea]d'],
-    ['one of a kind', 'Phosphorus spells its "f" sound with <b>ph</b>, twice, and ends <b>-us</b>. Manganese (Mn, MANG-guh-neez) and Magnesium (Mg, mag-NEE-zee-um) are different elements. Nickel spells its ending "ul" sound with <b>el</b>. Mercury ends with <b>y</b> saying "ee".', '[Ph]os[ph]or[us] Mangan[ese] Cobalt Nick[el] Mercur[y]']
-  ];
-  var YVOWEL = 'H[y]drogen Ox[y]gen Ber[y]llium Kr[y]pton Mercur[y]';
+  // Cards: [title, tip, items]. In items, [x] marks the part the card is about.
+  var SPELLVIEWS = {
+    morph: {
+      def: 'A <b>morpheme</b> is the smallest part of a word that carries meaning. Most element names are built from a meaning part plus an ending.',
+      cards: [
+        ['-ium and -um: the metal ending', 'Chemists end most metal names with <b>-ium</b>, said /iəm/. (Helium got it because scientists first thought it was a metal.) Aluminum and Platinum use <b>-um</b>.',
+          'Hel[ium] Lith[ium] Beryll[ium] Sod[ium] Magnes[ium] Potass[ium] Calc[ium] Scand[ium] Titan[ium] Vanad[ium] Chrom[ium] Uran[ium] Pluton[ium] Alumin[um] Platin[um]'],
+        ['-ine: the halogen ending', 'All four halogens here end in <b>-ine</b>.', 'Fluor[ine] Chlor[ine] Brom[ine] Iod[ine]'],
+        ['-on', 'The noble gases Neon, Argon, Krypton and Radon end in <b>-on</b>. Boron, Carbon and Silicon do too.', 'Ne[on] Arg[on] Krypt[on] Rad[on] Bor[on] Carb[on] Silic[on]'],
+        ['-gen: "maker"', '<b>-gen</b> means maker. <b>hydro</b> = water, <b>oxy</b> = sharp or acid, <b>nitro</b> = niter (a salt). Hydrogen is the "water-maker".', 'Hydro[gen] Nitro[gen] Oxy[gen]'],
+        ['Symbols from older names', 'These symbols come from the element\'s Latin name, not the English one. The Latin word is the meaning part.', 'Sodium Potassium Iron Copper Silver Tin Gold Mercury Lead']
+      ]
+    },
+    graph: {
+      def: 'A <b>grapheme</b> is 1 to 4 letters that spell one sound. A box shows the letters working together.',
+      cards: [
+        ['Two letters, one sound', '<b>ph</b> = /f/, <b>ch</b> = /k/, <b>th</b> = /θ/ (as in thin), <b>ck</b> = /k/, <b>ll</b> = /l/, <b>ss</b> = /s/, <b>pp</b> = /p/.',
+          '[Ph]os[ph]orus [Ch]lorine [Ch]romium Li[th]ium Ni[ck]el Bery[ll]ium Pota[ss]ium Co[pp]er'],
+        ['Consonant + e', 'The e joins the consonant before it to spell one sound: <b>ne</b> = /n/ (like in mane), <b>se</b> = /z/ (like in choose).',
+          'Fluori[ne] Chlori[ne] Bromi[ne] Iodi[ne] Mangane[se]'],
+        ['Vowel + r', 'An r after a vowel makes one sound together: <b>ar</b> = /ɑr/ (car), <b>or</b> = /ɔr/ (for), and /ər/ in Phosphorus, <b>er</b> and <b>ur</b> = /ər/ (her, fur).',
+          'C[ar]bon [Ar]gon B[or]on Chl[or]ine Phosph[or]us Copp[er] Silv[er] M[er]cury Sulf[ur]'],
+        ['Three letters, one sound', '<b>uor</b> spells /ʊr/ in Fluorine, /ˈflʊrin/.', 'Fl[uor]ine'],
+        ['Two vowels, one sound', '<b>ea</b> spells /ɛ/ in Lead, like in bread and head.', 'L[ea]d'],
+        ['All 42 names in graphemes', 'Each box or single letter is one sound.', '*all']
+      ]
+    },
+    phon: {
+      def: 'A <b>phoneme</b> is a sound. One sound can have more than one spelling, and one spelling can stand for more than one sound. Sounds are written between slashes, like /k/.',
+      cards: [
+        ['/k/: one sound, four spellings', '<b>c</b> (also at the end of Zinc), <b>k</b>, <b>ch</b>, or <b>ck</b>.', '[C]arbon [C]obalt [C]opper Sili[c]on [K]rypton [Ch]lorine [Ch]romium Ni[ck]el Zin[c]'],
+        ['/f/: one sound, two spellings', '<b>f</b> or <b>ph</b>.', '[F]luorine Sul[f]ur [Ph]os[ph]orus'],
+        ['/s/: one sound, three spellings', '<b>s</b>, <b>ss</b>, or <b>c</b> (before i or e).', '[S]odium [S]ilver Pota[ss]ium Cal[c]ium'],
+        ['/z/: one sound, three spellings', '<b>s</b>, <b>se</b>, or <b>z</b>.', 'Magne[s]ium Mangane[se] [Z]inc'],
+        ['/ɪ/: two spellings', '<b>i</b> or <b>y</b>.', 'L[i]thium T[i]n Z[i]nc S[i]lver N[i]ckel Kr[y]pton Ber[y]llium'],
+        ['/aɪ/: two spellings', '<b>i</b> or <b>y</b>.', '[I]ron [I]odine T[i]tanium N[i]trogen H[y]drogen'],
+        ['/i/: three spellings', '<b>e</b>, <b>i</b>, or <b>y</b>.', 'H[e]lium Mangan[e]se Chlor[i]ne Brom[i]ne Sod[i]um Mercur[y]'],
+        ['/ər/: three spellings', '<b>er</b>, <b>ur</b>, or <b>or</b>.', 'Copp[er] Silv[er] M[er]cury Sulf[ur] Phosph[or]us'],
+        ['c: one spelling, two sounds', '<b>c</b> says /s/ before i or e, and /k/ before a, o, u, or another consonant. Calcium has both.', '[C]arbon Sili[c]on Cal[c]ium'],
+        ['g: one spelling, two sounds', '<b>g</b> says /dʒ/ before e in these names (Hydrogen) and /ɡ/ before other letters (Gold).', 'Hydro[g]en Nitro[g]en Oxy[g]en [G]old Ar[g]on Ma[g]nesium'],
+        ['s: one spelling, two sounds', '<b>s</b> says /s/ in Sodium and /z/ in Magnesium.', '[S]odium [S]ilicon Magne[s]ium'],
+        ['y: one spelling, four sounds', '<b>y</b> says /aɪ/ in Hydrogen, /ɪ/ in Krypton and Beryllium, /ə/ in Oxygen, and /i/ at the end of Mercury.', 'H[y]drogen Kr[y]pton Ber[y]llium Ox[y]gen Mercur[y]'],
+        ['i: one spelling, three sounds', '<b>i</b> says /ɪ/ in Lithium, /aɪ/ in Iron, and /i/ in Chlorine.', 'L[i]thium [I]ron Chlor[i]ne'],
+        ['-on: one spelling, two sounds', 'All spelled <b>-on</b>, and it sounds two ways: /ɑn/ in Boron, Neon, Argon, Krypton and Radon, and /ən/ in Carbon and Silicon. In Iron, i says /aɪ/ and ron says /ərn/: /ˈaɪərn/.',
+          'Bor[on] Ne[on] Arg[on] Krypt[on] Rad[on] Carb[on] Silic[on] Ir[on]']
+      ]
+    }
+  };
+  // Where each name comes from (its meaning parts).
+  var ORIGIN = {
+    Hydrogen: 'hydro = water + gen = maker', Helium: 'helios = sun (Greek)', Lithium: 'lithos = stone (Greek)',
+    Beryllium: 'beryl, a gemstone', Boron: 'borax, a mineral', Carbon: 'carbo = coal (Latin)',
+    Nitrogen: 'niter, a salt + gen = maker', Oxygen: 'oxy = sharp, acid + gen = maker', Fluorine: 'fluere = to flow (Latin), from the mineral fluorite',
+    Neon: 'neos = new (Greek)', Sodium: 'soda; symbol Na from natrium', Magnesium: 'Magnesia, a region of Greece',
+    Aluminum: 'alum, a salt', Silicon: 'silex = flint (Latin)', Phosphorus: 'phos = light + phoros = bearer: "light-bearer" (Greek)',
+    Sulfur: 'sulfur (Latin)', Chlorine: 'chloros = pale green (Greek)', Argon: 'argos = idle, lazy (Greek): it barely reacts',
+    Potassium: 'potash ("pot ash"); symbol K from kalium', Calcium: 'calx = lime (Latin)', Scandium: 'Scandinavia',
+    Titanium: 'the Titans of Greek myth', Vanadium: 'Vanadís, a Norse goddess', Chromium: 'chroma = color (Greek)',
+    Manganese: 'magnes, also from Magnesia', Iron: 'Old English iren; symbol Fe from ferrum (Latin)', Cobalt: 'kobold, a goblin in German folk tales',
+    Nickel: 'Kupfernickel = "copper demon" (German)', Copper: 'Cyprus; symbol Cu from cuprum (Latin)', Zinc: 'Zink (German)',
+    Bromine: 'bromos = stench (Greek)', Krypton: 'kryptos = hidden (Greek)', Silver: 'Old English; symbol Ag from argentum (Latin)',
+    Tin: 'Old English; symbol Sn from stannum (Latin)', Iodine: 'iodes = violet (Greek)', Platinum: 'platina = little silver (Spanish)',
+    Gold: 'Old English; symbol Au from aurum (Latin)', Mercury: 'the planet Mercury; symbol Hg from hydrargyrum = water-silver', Lead: 'Old English; symbol Pb from plumbum (Latin), like plumbing',
+    Radon: 'radium + -on', Uranium: 'the planet Uranus', Plutonium: 'the dwarf planet Pluto'
+  };
   var NAMEZ = {}; EL.forEach(function (e) { NAMEZ[e.name] = e.z; });
-  function marked(w) { return w.replace(/\[([^\]]+)\]/g, '<b>$1</b>'); }
-  // Letter teams (graphemes): the letters that spell each sound, separated by spaces.
-  // "x*" ... "*y" are the two halves of a split team (i_e, e_e).
+  // Graphemes: the letters that spell each sound, separated by spaces (EBLI style: consonant + e is one grapheme, like ne, se).
   var GRAPH = {
     Hydrogen: 'H y d r o g e n', Helium: 'H e l i u m', Lithium: 'L i th i u m', Beryllium: 'B e r y ll i u m',
     Boron: 'B or o n', Carbon: 'C ar b o n', Nitrogen: 'N i t r o g e n', Oxygen: 'O x y g e n',
-    Fluorine: 'F l uor i* n *e', Neon: 'N e o n', Sodium: 'S o d i u m', Magnesium: 'M a g n e s i u m',
+    Fluorine: 'F l uor i ne', Neon: 'N e o n', Sodium: 'S o d i u m', Magnesium: 'M a g n e s i u m',
     Aluminum: 'A l u m i n u m', Silicon: 'S i l i c o n', Phosphorus: 'Ph o s ph or u s', Sulfur: 'S u l f ur',
-    Chlorine: 'Ch l or i* n *e', Argon: 'Ar g o n', Potassium: 'P o t a ss i u m', Calcium: 'C a l c i u m',
+    Chlorine: 'Ch l or i ne', Argon: 'Ar g o n', Potassium: 'P o t a ss i u m', Calcium: 'C a l c i u m',
     Scandium: 'S c a n d i u m', Titanium: 'T i t a n i u m', Vanadium: 'V a n a d i u m', Chromium: 'Ch r o m i u m',
-    Manganese: 'M a n g a n e* s *e', Iron: 'I r o n', Cobalt: 'C o b a l t', Nickel: 'N i ck e l',
-    Copper: 'C o pp er', Zinc: 'Z i n c', Bromine: 'B r o m i* n *e', Krypton: 'K r y p t o n',
-    Silver: 'S i l v er', Tin: 'T i n', Iodine: 'I o d i* n *e', Platinum: 'P l a t i n u m',
+    Manganese: 'M a n g a n e se', Iron: 'I r o n', Cobalt: 'C o b a l t', Nickel: 'N i ck e l',
+    Copper: 'C o pp er', Zinc: 'Z i n c', Bromine: 'B r o m i ne', Krypton: 'K r y p t o n',
+    Silver: 'S i l v er', Tin: 'T i n', Iodine: 'I o d i ne', Platinum: 'P l a t i n u m',
     Gold: 'G o l d', Mercury: 'M er c u r y', Lead: 'L ea d', Radon: 'R a d o n',
     Uranium: 'U r a n i u m', Plutonium: 'P l u t o n i u m'
   };
@@ -1210,32 +1260,36 @@
   };
   function teams(name) {
     return GRAPH[name].split(' ').map(function (t) {
-      var split = t.indexOf('*') >= 0, letters = t.replace('*', '');
-      return '<span class="gr' + (split ? ' split' : letters.length > 1 ? ' multi' : '') + '">' + letters + '</span>';
+      return '<span class="gr' + (t.length > 1 ? ' multi' : '') + '">' + t + '</span>';
     }).join('');
   }
-  function nameHTML(w) { return S.spellView === 'graphemes' ? teams(plain(w)) : marked(w); }
+  function plain(w) { return w.replace(/[\[\]]/g, ''); }
+  function marked(w, view) {
+    return w.replace(/\[([^\]]+)\]/g, view === 'graph' ? '<span class="gr multi">$1</span>' : '<b>$1</b>');
+  }
   [].forEach.call(document.querySelectorAll('[data-spellview]'), function (b) {
     b.addEventListener('click', function () { S.spellView = b.getAttribute('data-spellview'); save(); renderFams(); });
   });
-  function plain(w) { return w.replace(/[\[\]]/g, ''); }
+  function spellView() { return SPELLVIEWS[S.spellView] ? S.spellView : 'morph'; }
   function renderFams() {
-    var view = S.spellView === 'graphemes' ? 'graphemes' : 'marks';
+    var view = spellView(), V = SPELLVIEWS[view];
     [].forEach.call(document.querySelectorAll('[data-spellview]'), function (b) { b.classList.toggle('on', b.getAttribute('data-spellview') === view); });
-    document.getElementById('glegend').hidden = view !== 'graphemes';
+    document.getElementById('spellDef').innerHTML = V.def;
     var inSet = {}; SETS[S.set].forEach(function (e) { inSet[e.z] = 1; });
-    var html = SPELL.map(function (f, i) {
-      return '<div class="fam f' + i + '"><h3>' + f[0] + '</h3><p class="tip">' + f[1] + '</p><div class="names">' +
-        f[2].split(' ').map(function (w) {
-          var z = NAMEZ[plain(w)];
-          return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
-        }).join('') + '</div></div>';
+    function btn(w, inner) {
+      var z = NAMEZ[plain(w)];
+      return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + inner + '</button>';
+    }
+    var cards = V.cards.slice();
+    var html = cards.map(function (c, i) {
+      var items = c[2] === '*all' ? EL.map(function (e) { return btn(e.name, teams(e.name)); }).join('')
+        : c[2].split(' ').map(function (w) { return btn(w, marked(w, view)); }).join('');
+      return '<div class="fam f' + (i % 9) + (c[2] === '*all' ? ' allg' : '') + '"><h3>' + c[0] + '</h3><p class="tip">' + c[1] + '</p><div class="names">' + items + '</div></div>';
     }).join('');
-    html += '<div class="fam f8"><h3>y as a vowel</h3><p class="tip">In all five, <b>y</b> spells a vowel sound: "eye" in Hydrogen, short i in Beryllium and Krypton, a quick "uh" in Oxygen, and "ee" at the end of Mercury (like happy).</p><div class="names">' +
-      YVOWEL.split(' ').map(function (w) {
-        var z = NAMEZ[plain(w)];
-        return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
-      }).join('') + '</div></div>';
+    if (view === 'morph') {
+      html += '<div class="fam f8 origins"><h3>Where each name comes from</h3><p class="tip">The meaning part of every name. Tap a name to hear it and see it on the table.</p><div class="olist">' +
+        EL.map(function (e) { return '<div class="orow">' + btn(e.name, e.name) + '<span>' + ORIGIN[e.name] + '</span></div>'; }).join('') + '</div></div>';
+    }
     document.getElementById('fams').innerHTML = html;
     document.getElementById('fdetail').innerHTML = '';
     [].forEach.call(document.querySelectorAll('#fams .fname'), function (b) {
@@ -1244,6 +1298,8 @@
         var d = document.getElementById('fdetail');
         d.innerHTML = '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + playBtn(e) + '</div>' +
           '<div class="say">Sounds like <b>' + SAY[e.name][1] + '</b> · <span class="ipa">/' + SAY[e.name][0] + '/</span></div>' +
+          '<div class="say">Graphemes: ' + teams(e.name) + '</div>' +
+          '<div class="say">Meaning: ' + ORIGIN[e.name] + '</div>' +
           '<div><b>' + CATNAME[e.cat] + '</b> · ' + e.fam + '</div>' + (e.hook ? '<div class="hook">' + e.hook + '</div>' : '') +
           '<div class="board mini" id="famMini"></div></div>';
         buildBoard(document.getElementById('famMini'), { mini: true })[e.z].classList.add('hit');
