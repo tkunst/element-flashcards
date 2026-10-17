@@ -151,6 +151,7 @@
   .gr.multi { border: 2px solid #2c5aa0; border-radius: 5px; background: #fff; padding: 0 3px; margin: 0 1px; }
   .fgroup { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
   .fgroup + .fgroup { margin-top: 26px; }
+  .lat { color: #0b6e99; font-weight: 800; margin-left: 4px; }
   .olist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 14px; }
   .orow { display: flex; align-items: center; gap: 8px; font-size: .92em; }
   .orow .fname { min-width: 7.5em; text-align: left; }
@@ -1173,7 +1174,7 @@
         ['-ine: the halogen ending', 'All four halogens here end in <b>-ine</b>.', 'Fluor[ine] Chlor[ine] Brom[ine] Iod[ine]'],
         ['-on', 'Four of the five noble gases on this list end in <b>-on</b>: Neon, Argon, Krypton and Radon (the fifth, Helium, ends in -ium). Boron, Carbon and Silicon also end in <b>-on</b>, but they are not noble gases: Boron and Silicon are metalloids, and Carbon is a nonmetal.', 'Ne[on] Arg[on] Krypt[on] Rad[on] Bor[on] Carb[on] Silic[on]'],
         ['-gen: "maker"', '<b>-gen</b> means maker. It comes from Greek <b>-genēs</b>, "born of, made by", the same family as <b>gene</b>, <b>genesis</b> and <b>generate</b>. <b>hydro</b> = water, <b>oxy</b> = sharp or acid, <b>nitro</b> = niter (a salt). The French chemist Lavoisier named hydrogen "water-maker" because it burns to make water, and oxygen "acid-maker" because he thought every acid had oxygen in it. He was wrong about acids, but the name stuck.', 'Hydro[gen] Nitro[gen] Oxy[gen]'],
-        ['Symbols from older names', 'These symbols come from the element\'s Latin name, not the English one. The Latin word is the meaning part.', 'Sodium Potassium Iron Copper Silver Tin Gold Mercury Lead']
+        ['Symbols from older names', 'These symbols come from the element\'s Latin name, not the English one. The Latin word is the meaning part.', '*latin']
       ]
     },
     graph: {
@@ -1227,6 +1228,8 @@
     Gold: 'Old English; symbol Au from aurum (Latin)', Mercury: 'the planet Mercury; symbol Hg from hydrargyrum = water-silver', Lead: 'Old English; symbol Pb from plumbum (Latin), like plumbing',
     Radon: 'radium + -on', Uranium: 'the planet Uranus', Plutonium: 'the dwarf planet Pluto'
   };
+  // Symbols that come from a Latin name (shown as: Sodium  Na = natrium)
+  var LATIN = { Sodium: 'natrium', Potassium: 'kalium', Iron: 'ferrum', Copper: 'cuprum', Silver: 'argentum', Tin: 'stannum', Gold: 'aurum', Mercury: 'hydrargyrum', Lead: 'plumbum' };
   var NAMEZ = {}; EL.forEach(function (e) { NAMEZ[e.name] = e.z; });
   // Graphemes: the letters that spell each sound, separated by spaces (EBLI style: consonant + e is one grapheme, like ne, se).
   var GRAPH = {
@@ -1284,6 +1287,7 @@
     var cards = V.cards.slice();
     function cardHTML(c, i) {
       var items = c[2] === '*all' ? EL.map(function (e) { return btn(e.name, teams(e.name)); }).join('')
+        : c[2] === '*latin' ? Object.keys(LATIN).map(function (n) { return btn(n, n + ' <span class="lat">' + BYZ[NAMEZ[n]].sym + ' = ' + LATIN[n] + '</span>'); }).join('')
         : c[2].split(' ').map(function (w) { return btn(w, marked(w, view)); }).join('');
       return '<div class="fam f' + (i % 9) + (c[2] === '*all' ? ' allg' : '') + '"><h3>' + c[0] + '</h3><p class="tip">' + c[1] + '</p><div class="names">' + items + '</div></div>';
     }
