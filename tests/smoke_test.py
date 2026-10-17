@@ -414,6 +414,7 @@ def connections_spelling_blank(browser):
     page.click('[data-tab="spell"]')
     check([b.strip() for b in page.locator("[data-spellview]").all_inner_texts()] == ["Phonemes (sounds)", "Morphemes (meaning)", "Graphemes (letters for a sound)"], "order: phonemes, morphemes, graphemes")
     check("phoneme" in page.locator("#spellDef").inner_text(), "Spelling should open on phonemes")
+    check(page.locator("#tab-spell .fname.dim").count() == 0, "Spelling page should not fade any names")
     page.click('[data-spellview="morph"]')
     check("morpheme" in page.locator("#spellDef").inner_text(), "morpheme view")
     mg = page.locator("#fams .fgroup")

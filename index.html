@@ -319,7 +319,7 @@
       <button class="pill" type="button" data-spellview="graph">Graphemes (letters for a sound)</button>
     </div>
     <p class="note" id="spellDef" style="margin-top:0"></p>
-    <p class="note" style="margin-top:0">Tap any name to hear it and see its graphemes, meaning, and spot on the table. Names outside the element group you picked are faded.</p>
+    <p class="note" style="margin-top:0">Tap any name to hear it and see its graphemes, meaning, and spot on the table.</p>
     <div class="fams" id="fams"></div>
     <div class="fdetail" id="fdetail"></div>
   </div>
@@ -1306,7 +1306,7 @@
     var inSet = {}; SETS[S.set].forEach(function (e) { inSet[e.z] = 1; });
     function btn(w, inner) {
       var z = NAMEZ[plain(w)];
-      return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + inner + '</button>';
+      return '<button type="button" class="fname" data-z="' + z + '">' + inner + '</button>';  // no fading here: the element group doesn't change the patterns
     }
     var cards = V.cards.slice();
     function cardHTML(c, i) {
