@@ -981,7 +981,7 @@
     if (!g.queue.length) return endGame();
     g.misses = 0;
     var e = BYZ[g.queue[0]];
-    document.getElementById('gPrompt').innerHTML = 'Find: ' + e.name;
+    document.getElementById('gPrompt').innerHTML = 'Find: ' + e.name + playBtn(e);
     document.getElementById('gStatus').textContent = (g.total - g.queue.length) + ' of ' + g.total + ' found' +
       (g.easy ? '. It is in the highlighted row.' : '');
     if (g.easy) showRow(g.queue[0]);

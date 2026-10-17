@@ -45,6 +45,11 @@ def check(cond, msg):
         raise AssertionError(msg)
 
 
+def find_name(page):
+    """The element named in the Find the Elements prompt (minus its play button)."""
+    return page.locator("#gPrompt").inner_text().replace("▶ Hear it", "").replace("Find:", "").strip()
+
+
 def current(page):
     """(direction, z) of the card on screen."""
     sym = page.locator("#fcFace .sym")
@@ -170,18 +175,22 @@ def run(browser, label, viewport):
     page.click('[data-tab="game"]')
     check(page.locator("#gEasy").is_checked(), "first round of a group should be the easy round")
     page.click("#gStart")
-    name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+    name = find_name(page)
     check("rowhint" in page.locator(f'#gBoard [data-z="{BY_NAME[name][0]}"]').get_attribute("class"), "easy round should show the row first")
     for _ in range(15):
-        name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+        name = find_name(page)
         page.click(f'#gBoard [data-z="{BY_NAME[name][0]}"]')
     check(page.locator("#gPrompt").inner_text() == "Done!", "easy round did not finish")
     check(not page.locator("#gEasy").is_checked(), "after an easy round the next round should be normal")
 
     # --- normal round: no row until 2 misses; 3 misses reveal it ---
     page.click("#gStart")
-    name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+    name = find_name(page)
     check(page.locator("#gBoard .rowhint").count() == 0, "normal round should not show the row before misses")
+    page.click("#gPrompt .play")   # hear the element being asked for
+    page.wait_for_function("() => { const a = window.__tklearn.audio(); return a && (a.readyState >= 2 || a.error); }", timeout=10000)
+    zz = BY_NAME[name][0]
+    check(page.evaluate(f"() => !window.__tklearn.audio().error && window.__tklearn.audio().src.endsWith('/audio/{zz:02d}-{name.lower()}.mp3')"), "Find prompt should play the named element")
     z = BY_NAME[name][0]
     wrong = next(k for k in (37, 38, 55) if k != z)
     for i in range(3):
@@ -390,7 +399,7 @@ def connections_spelling_blank(browser):
     check(page.locator('#gBoard [data-z="26"]').inner_text().strip() == "26", "numbers-only board should show just the number")
     page.uncheck("#gEasy")
     page.click("#gStart")
-    name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+    name = find_name(page)
     z = BY_NAME[name][0]
     page.click(f'#gBoard [data-z="{z}"]')
     check(EL[z][0] in page.locator(f'#gBoard [data-z="{z}"]').inner_text(), "a found square should show its symbol")

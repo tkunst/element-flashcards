@@ -11,7 +11,7 @@ Live: https://tkunst.github.io/element-flashcards/ · Part of the study-resource
 - **Find the Elements boards:** Symbols, Numbers only, or Blank (a found square shows its symbol). Best times are kept per board.
 - **Connections:** 16 tiles, find 4 groups of 4. "Same element": an element's symbol, name, atomic number, and spot on a mini table. "Same family": halogens, noble gases, groups 1-2 metals, transition metals (from all 42). "One away!" when 3 of 4 match; mistakes are counted, never game-ending.
 - **Spelling:** the 42 names in 8 spelling families by ending (-ium, -inum, -ine, -on, -gen, -er/-ur, short and old, one of a kind) plus a "sneaky y" strip, with the tricky letters marked, or a "Letter teams" view that boxes each multi-letter grapheme (ph, ch, th, ck, ll, ss, pp, ar, or, er, ur, ea, uor) and shows split teams (i_e, e_e) dashed. Ladder pieces never split a letter team. Tap a name for its symbol, category, and location.
-- **Hear it:** a play button on every flashcard answer and in the Spelling details plays a recorded human pronunciation (`audio/NN-name.mp3`, 42 clips). Clips play only when tapped and load from this site; nothing is sent anywhere.
+- **Hear it:** a play button on every flashcard answer, in the Find the Elements prompt, and in the Spelling details plays a recorded human pronunciation (`audio/NN-name.mp3`, 42 clips). Clips play only when tapped and load from this site; nothing is sent anywhere.
 - **Progress:** per-element strength map, plus a backup code to copy progress to another device.
 
 No account: progress lives in this browser's `localStorage` only and is never sent anywhere. Clearing site data, a guest window, or a different device starts fresh (use the backup code to move it).
