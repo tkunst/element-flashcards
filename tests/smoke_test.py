@@ -84,6 +84,7 @@ def run(browser, label, viewport):
     check(page.locator("#nostore").is_hidden(), "storage banner shown with working storage")
     check(page.locator('a[href="/"]').count() >= 1, "missing link back to the hub")
     check(page.locator("#stNew").inner_text() == "12", "set 1-15 should offer 12 new cards on day one")
+    page.click('[data-namemode="type"]')  # ladder is tested separately in ladder(); this flow types every answer
 
     # --- review: right answer moves the card up a box ---
     page.click("#startReview")
@@ -92,20 +93,13 @@ def run(browser, label, viewport):
     check(stored(page)["items"][f"{z}{d}"]["b"] == 2, "correct answer should move a new card to box 2")
     page.click("#fcNext")
 
-    # --- spelling: close, fixable, counts as 'fixed' (stays in box 1) ---
+    # --- spelling doesn't count: a near-miss name is right, and the real spelling is shown ---
     d, z = current(page)
-    if d == "s":
-        answer(page, misspell=True)
-        check("close" in page.locator("#f-name").get_attribute("class"), "misspelling not marked close")
-        check(page.locator("#fcNext").is_hidden(), "close answer should allow a fix before moving on")
-        page.fill("#in-name", EL[z][1])
-    else:
-        answer(page, wrong_case=True)
-        check("close" in page.locator("#f-sym").get_attribute("class"), "wrong-case symbol not marked close")
-        page.fill("#in-sym", EL[z][0])
-    page.click("#fcCheck")
-    check("close" in page.locator(".result").get_attribute("class"), "fixed answer should say it stays at the same level")
-    check(stored(page)["items"][f"{z}{d}"]["b"] == 1, "fixed answer should not promote the card")
+    check(d == "s", "second new card should be symbol -> name")
+    answer(page, misspell=True)
+    check("right" in page.locator(".result").get_attribute("class"), "near-miss spelling should count as right")
+    check(EL[z][1] in page.locator("#fb-name").inner_text(), "near-miss should show the correct spelling")
+    check(stored(page)["items"][f"{z}{d}"]["b"] == 2, "near-miss spelling should promote like a right answer")
     page.click("#fcNext")
 
     # --- miss: card returns within the next few cards in the same session ---
@@ -133,7 +127,7 @@ def run(browser, label, viewport):
     page.evaluate("() => window.__tklearn.shiftDays(1)")
     check(int(page.locator("#stDue").inner_text()) >= 1, "nothing due the next day")
 
-    # --- symbol case matters: "co" is close (must fix to "Co"), never right ---
+    # --- symbol case matters: "co" is close (must fix to "Co"), never right; fixing = 'fixed' ---
     page.click("#startPractice")
     for _ in range(30):
         d, z = current(page)
@@ -141,6 +135,9 @@ def run(browser, label, viewport):
             answer(page, wrong_case=True)
             check("close" in page.locator("#f-sym").get_attribute("class"), "wrong-case symbol not marked close")
             check(page.locator("#fcNext").is_hidden(), "wrong-case symbol should not finish the card")
+            page.fill("#in-sym", EL[z][0])
+            page.click("#fcCheck")
+            check("close" in page.locator(".result").get_attribute("class"), "fixed symbol should say it stays at the same level")
             break
         answer(page)
         page.click("#fcNext")
@@ -194,6 +191,108 @@ def run(browser, label, viewport):
     print(f"ok  {label}: grading, close/fix, miss returns, reload, schedule, tap mode, game, backup")
 
 
+def ladder(browser):
+    """Step 1 (pick the spelling) -> step 2 (build from chunks) -> step 3 (type; near miss counts)."""
+    ctx = browser.new_context()
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(PAGE)
+    check(page.locator('[data-namemode="ladder"]').get_attribute("class").count("on"), "step by step should be the default")
+
+    # step 1: a new symbol card offers 3 spellings, one real; decoys are misspellings, never the real name
+    page.click("#startReview")
+    check("Step 1" in page.locator("#fcStep").inner_text(), "new card should start at step 1")
+    opts = page.locator("#fcInputs .opt").all_inner_texts()
+    check(len(opts) == 3 and opts.count("Hydrogen") == 1, f"step 1 options wrong: {opts}")
+    page.click('#fcInputs .opt:not([data-o="Hydrogen"])')
+    page.fill("#in-cat", "nonmetal")
+    page.click("#fcCheck")
+    check("wrong" in page.locator(".result").get_attribute("class"), "picking a misspelling should be wrong")
+    check(stored(page)["items"]["1s"]["b"] == 1, "a miss at step 1 keeps the card at box 1")
+    page.click("#fcStop")
+
+    # step 2: box 2 -> build the name from chunk tiles (decoy chunks included)
+    def due(box):
+        page.evaluate(f"""() => {{ localStorage.setItem('{KEY}', JSON.stringify({{items: {{'1s': {{b: {box}, due: 0}}}},
+            newDay: 99999999, newCount: 99, set: 'a', catMode: 'type', nameMode: 'ladder', best: {{}}}})); }}""")
+        page.reload()
+        page.click("#startReview")
+    due(2)
+    for t in ("hy", "gen", "dro"):                     # wrong order is wrong, and drops the card to box 1
+        page.click(f'#tiles .tile[data-t="{t}"]')
+    page.fill("#in-cat", "nonmetal")
+    page.click("#fcCheck")
+    check("wrong" in page.locator(".result").get_attribute("class"), "pieces in the wrong order should be wrong")
+    check(stored(page)["items"]["1s"]["b"] == 1, "a miss at step 2 should drop the card to box 1")
+    due(2)
+    check("Step 2" in page.locator("#fcStep").inner_text(), "box 2 card should be at step 2")
+    tiles = page.locator("#tiles .tile").all_inner_texts()
+    check(sorted(tiles) == sorted(["hy", "dro", "gen", "hi"]), f"chunk tiles wrong: {tiles}")
+    page.click('#tiles .tile[data-t="hi"]')          # wrong piece...
+    page.click("#built .tile")                        # ...tapped again goes back
+    for t in ("hy", "dro", "gen"):
+        page.click(f'#tiles .tile[data-t="{t}"]')
+    page.fill("#in-cat", "nonmetal")
+    page.click("#fcCheck")
+    check("right" in page.locator(".result").get_attribute("class"), "built name should be right")
+    check(stored(page)["items"]["1s"]["b"] == 3, "right at step 2 should move the card to box 3")
+
+    # step 3: box 3 -> type it cold; a near miss counts
+    due(3)
+    check("Step 3" in page.locator("#fcStep").inner_text(), "box 3 card should be typed")
+    page.fill("#in-name", "hydrogin")
+    page.fill("#in-cat", "nonmetal")
+    page.click("#fcCheck")
+    check("right" in page.locator(".result").get_attribute("class"), "near miss should count at step 3")
+    check(stored(page)["items"]["1s"]["b"] == 4, "typed right should move the card to box 4 (solid)")
+
+    check(not errors, f"JavaScript errors in ladder: {errors}")
+    ctx.close()
+    print("ok  ladder: pick spelling (miss stays box 1) -> build chunks -> type (near miss counts)")
+
+
+def sort(browser):
+    ctx = browser.new_context(viewport={"width": 1366, "height": 1000})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(PAGE)
+    page.click('[data-tab="sort"]')
+    check(page.locator("#sBoard .sq.sortable").count() == 15, "set 1-15 should have 15 sortable squares")
+
+    def tap_place(z, cat):
+        page.click(f'#sBoard [data-z="{z}"]')
+        page.click(f'#ovals .oval[data-c="{cat}"] h3')
+
+    tap_place(1, "nonmetal")                                   # tap, then tap the oval
+    sq = page.locator('#sBoard [data-z="3"]').bounding_box()  # drag lithium into the metal oval
+    ov = page.locator('#ovals .oval[data-c="metal"]').bounding_box()
+    page.mouse.move(sq["x"] + sq["width"] / 2, sq["y"] + sq["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(sq["x"] + 40, sq["y"] + 40, steps=4)
+    page.mouse.move(ov["x"] + ov["width"] / 2, ov["y"] + ov["height"] / 2, steps=8)
+    page.mouse.up()
+    check(page.locator('#ovals .oval[data-c="metal"] .chip[data-z="3"]').count() == 1, "dragging Li to metal failed")
+    tap_place(5, "nonmetal")                                   # boron is a metalloid: wrong on purpose
+    page.click("#sCheck")
+    check(page.locator("#sScore").inner_text().startswith("2 / 15 right"), f"sort score: {page.locator('#sScore').inner_text()}")
+    check("wrong" in page.locator('#ovals .chip[data-z="5"]').get_attribute("class"), "boron in nonmetal should be wrong")
+    page.click("#sRetry")
+    check(page.locator('#ovals .chip[data-z="5"]').count() == 0, "send wrong ones back should return boron")
+    check("placed" not in page.locator('#sBoard [data-z="5"]').get_attribute("class"), "boron should be back on the table")
+    for z in range(1, 16):
+        if z in (1, 3):
+            continue
+        tap_place(z, EL[z][2])
+    page.click("#sCheck")
+    check(page.locator("#sScore").inner_text().startswith("15 / 15 right"), "all placed correctly should score 15/15")
+    check(page.locator("#sRule").is_visible(), "the staircase rule should appear after a perfect sort")
+    check(not errors, f"JavaScript errors in sort: {errors}")
+    ctx.close()
+    print("ok  sort: tap-place, drag, check, send back, perfect -> staircase rule")
+
+
 def blocked_storage(browser):
     ctx = browser.new_context()
     ctx.add_init_script("""Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } });""")
@@ -202,6 +301,7 @@ def blocked_storage(browser):
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(PAGE)
     check(page.locator("#nostore").is_visible(), "blocked storage should show the warning banner")
+    page.click('[data-namemode="type"]')
     page.click("#startReview")
     answer(page)
     check(page.locator(".result").count() == 1, "cards should still work without storage")
@@ -216,6 +316,8 @@ def main():
         try:
             for label, vp in VIEWPORTS.items():
                 run(browser, label, vp)
+            ladder(browser)
+            sort(browser)
             blocked_storage(browser)
         finally:
             browser.close()

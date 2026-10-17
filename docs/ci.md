@@ -23,12 +23,15 @@ The test carries its own answer key for all 42 elements, so it also cross-checks
 - A missed card comes back within the next few cards, and re-answering it does not promote it.
 - Progress survives a reload; the new-card count goes down; the next day (simulated with the `window.__tklearn.shiftDays` test hook) cards come due.
 - Tap-a-color category answers grade correctly.
+- A near-miss name spelling counts as right, shows the correct spelling, and promotes the card.
+- Name ladder: a new card starts at step 1 (three spellings, exactly one real); picking a misspelling is wrong and keeps box 1; a box-2 card shows the right chunk tiles plus the decoy; wrong order is wrong and drops to box 1; the right order promotes to box 3; a box-3 card is typed and a near miss counts.
+- Sort: tap-to-place and mouse drag both land in the right oval; check scores right/wrong; "send wrong ones back" returns only the wrong ones; a perfect sort shows the staircase rule.
 - Game: three misses reveal the square; a correct tap counts and colors the square.
 - Backup code: reset clears progress and restore brings it back exactly.
 - With `localStorage` blocked, the warning banner shows and the cards still work.
 - No JavaScript errors anywhere.
 
-Verified when set up by breaking the page on purpose: box promotion off, missed-card requeue removed, symbol case ignored, storage error unguarded, and wrong game square accepted. Each break made the test fail.
+Verified by breaking the page on purpose: box promotion off, missed-card requeue removed, symbol case ignored, storage error unguarded, wrong game square accepted (2026-10-16); ladder step fixed at typing, near-miss not counted, sort always right, send-back disabled, any chunk order accepted (2026-10-17). Each break made the test fail.
 
 ## Running locally
 
@@ -41,4 +44,4 @@ python3 tests/smoke_test.py
 
 ## If you change the page
 
-The test relies on these IDs and attributes: `#jswarn`, `#nostore`, `#stNew`, `#stDue`, `#startReview`, `#startPractice`, `#fcFace .sym` / `.nm`, `#in-name`, `#in-cat`, `#in-sym`, `#f-name`, `#f-sym`, `#fcCheck`, `#fcNext`, `#fcStop`, `.result`, `#fcInputs .cat[data-c]`, `[data-set]`, `[data-catmode]`, `[data-tab]`, `#gStart`, `#gPrompt`, `#gStatus`, `#gBoard [data-z]`, `#pBoard`, `#bkOut`, `#bkIn`, `#bkReset`, `#bkRestore`, the storage key `tklearn-element-flashcards-v1`, and `window.__tklearn`. Rename one and update `tests/smoke_test.py` in the same commit.
+The test relies on these IDs and attributes: `#jswarn`, `#nostore`, `#stNew`, `#stDue`, `#startReview`, `#startPractice`, `#fcFace .sym` / `.nm`, `#in-name`, `#in-cat`, `#in-sym`, `#f-name`, `#f-sym`, `#fcCheck`, `#fcNext`, `#fcStop`, `.result`, `#fcInputs .cat[data-c]`, `[data-set]`, `[data-catmode]`, `[data-tab]`, `[data-namemode]`, `#fcStep`, `#fcInputs .opt[data-o]`, `#tiles .tile[data-t]`, `#built`, `#fb-name`, `#sBoard [data-z]`, `#ovals .oval[data-c]`, `#ovals .chip[data-z]`, `#sCheck`, `#sRetry`, `#sScore`, `#sRule`, `#gStart`, `#gPrompt`, `#gStatus`, `#gBoard [data-z]`, `#pBoard`, `#bkOut`, `#bkIn`, `#bkReset`, `#bkRestore`, the storage key `tklearn-element-flashcards-v1`, and `window.__tklearn`. Rename one and update `tests/smoke_test.py` in the same commit.

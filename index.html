@@ -100,10 +100,38 @@
   textarea { font: inherit; font-size: .85em; width: 100%; min-height: 70px; padding: 8px; border: 2px solid var(--line); border-radius: 10px; }
   h2 { font-size: 1.15em; margin: 18px 0 6px; }
   h2:first-child { margin-top: 0; }
+  .step { display: inline-block; font-size: .8em; font-weight: 700; color: var(--blue); background: #eef2f8; border-radius: 999px; padding: 3px 10px; margin-bottom: 8px; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt { font: inherit; font-size: 1.15em; font-weight: 700; text-align: left; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; color: var(--ink); }
+  .opt.sel { border-color: var(--blue); background: #dfeaff; }
+  .opt.right { border-color: var(--right); background: #e3f6e9; }
+  .opt.wrong { border-color: var(--wrong); background: #fde8e6; text-decoration: line-through; }
+  .built { display: flex; flex-wrap: wrap; gap: 6px; min-height: 54px; padding: 8px; border: 2px dashed var(--line); border-radius: 10px; margin-bottom: 8px; background: #fafbfc; }
+  .built.right { border: 2px solid var(--right); background: #e3f6e9; }
+  .built.wrong { border: 2px solid var(--wrong); background: #fde8e6; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tile { font: inherit; font-size: 1.15em; font-weight: 700; padding: 8px 14px; border: 2px solid #8a93a3; border-radius: 8px; background: #fff; cursor: pointer; color: var(--ink); }
+  .tile.used { visibility: hidden; }
+  .ovals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; position: sticky; bottom: 0; z-index: 5; background: var(--card); padding: 8px 0 4px; }
+  .oval { min-height: 96px; max-height: 32vh; overflow-y: auto; border-radius: 999px / 70px; border: 3px solid #8a93a3; padding: 14px 18px 12px; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+  .oval[data-c="metal"] { background: var(--metal); } .oval[data-c="metalloid"] { background: var(--metalloid); } .oval[data-c="nonmetal"] { background: var(--nonmetal); }
+  .oval.hover { outline: 4px solid var(--ink); }
+  .oval h3 { margin: 0 0 6px; font-size: 1em; text-transform: uppercase; letter-spacing: .05em; }
+  .oval .in { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .chip { font: inherit; font-weight: 800; min-width: 2.4em; padding: 4px 6px; border: 2px solid #555; border-radius: 6px; background: #fff; cursor: pointer; color: var(--ink); }
+  .chip.right { border-color: var(--right); background: #e3f6e9; }
+  .chip.wrong { border-color: var(--wrong); background: #fde8e6; }
+  .sq.sortable { cursor: grab; touch-action: none; background: #fff; }
+  .sq.placed { visibility: hidden; }
+  .sq.pick, .chip.pick { outline: 3px solid #f0a500; }
+  .ghost { position: fixed; pointer-events: none; z-index: 10; font-weight: 800; padding: 6px 10px; border: 2px solid var(--orange); border-radius: 6px; background: #fff; transform: translate(-50%, -50%); }
   .tm { margin: 18px 0 0; font-size: .8em; color: #6a7383; }
 
   @media (max-width: 700px) {
     body { padding: 12px; font-size: 16px; }
+    .ovals { gap: 6px; }
+    .oval { min-height: 80px; border-radius: 28px; padding: 8px 6px; }
+    .oval h3 { font-size: .8em; }
     .face .sym { font-size: 4.4em; }
     .face .nm { font-size: 1.9em; }
   }
@@ -121,6 +149,7 @@
 
   <div class="row tabs">
     <button class="pill on" type="button" data-tab="cards">Flashcards</button>
+    <button class="pill" type="button" data-tab="sort">Sort</button>
     <button class="pill" type="button" data-tab="game">Find the Elements</button>
     <button class="pill" type="button" data-tab="progress">Progress</button>
   </div>
@@ -146,11 +175,17 @@
         <button class="btn alt" id="startPractice" type="button">Practice all (ignore schedule)</button>
       </div>
       <div class="row">
+        <span class="lbl">Names:</span>
+        <button class="pill" type="button" data-namemode="ladder">Step by step</button>
+        <button class="pill" type="button" data-namemode="type">Always type (quiz practice)</button>
+      </div>
+      <div class="row">
         <span class="lbl">Metal / nonmetal / metalloid:</span>
         <button class="pill" type="button" data-catmode="type">Type it</button>
         <button class="pill" type="button" data-catmode="tap">Tap a color</button>
       </div>
       <p class="note">Each element has two cards: <b>symbol → name</b> and <b>name → symbol</b>. Get a card right and it comes back after a longer gap (1, 2, 4, then 7 days). Miss it and it comes back in a few cards, and again tomorrow. A review takes about 10 minutes. Up to 12 new cards are added per day.</p>
+      <p class="note"><b>Step by step:</b> a new or missed card starts easy (pick the real spelling), then you build the name from pieces, then you type it with nothing to help, like the real quiz. Each right answer moves the card up a step. A card only counts as solid after you've typed it.</p>
     </div>
 
     <div class="fc" id="cardRun" hidden>
@@ -163,8 +198,27 @@
         <button class="btn" id="fcNext" type="button" hidden>Next</button>
         <button class="btn alt" id="fcStop" type="button">Stop</button>
       </div>
-      <p class="note" id="fcHint">Capital letters and spaces don't matter in names. In symbols the capital matters: Co (cobalt) is not CO. A misspelling shows orange: fix it and check again.</p>
+      <p class="note" id="fcHint">Spelling doesn't have to be perfect: a near miss counts, and you'll see the right spelling. In symbols the capital matters: Co (cobalt) is not CO.</p>
     </div>
+  </div>
+
+  <!-- SORT -->
+  <div class="panel" id="tab-sort" hidden>
+    <div class="prompt">Metal, metalloid, or nonmetal?</div>
+    <p class="note" style="margin-top:0">Drag each element from the table into its oval (or tap the element, then tap the oval). Then check.</p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="sCheck" type="button">Check</button>
+      <button class="btn alt" id="sRetry" type="button" hidden>Send wrong ones back</button>
+      <button class="btn alt" id="sReset" type="button">Start over</button>
+      <span class="lbl" id="sScore"></span>
+    </div>
+    <div class="boardscroll"><div class="board" id="sBoard"></div></div>
+    <div class="ovals" id="ovals">
+      <div class="oval" data-c="metal"><h3>Metal</h3><div class="in"></div></div>
+      <div class="oval" data-c="metalloid"><h3>Metalloid</h3><div class="in"></div></div>
+      <div class="oval" data-c="nonmetal"><h3>Nonmetal</h3><div class="in"></div></div>
+    </div>
+    <p class="note" id="sRule" hidden>The pattern: elements <b>left of the staircase</b> (the gray squares) are metals, elements <b>on</b> it are metalloids, and elements <b>right</b> of it are nonmetals. The one exception is hydrogen: it sits on the left but is a nonmetal.</p>
   </div>
 
   <!-- GAME -->
@@ -257,6 +311,36 @@
     [94, 'Pu', 'Plutonium', 'metal', 'actinide (inner transition metal)', '']
   ].map(function (r) { return { z: r[0], sym: r[1], name: r[2], cat: r[3], fam: r[4], hook: r[5], alt: r[6] || [] }; });
   var BYZ = {}; EL.forEach(function (e) { BYZ[e.z] = e; });
+
+  // Name ladder: chunks to build the name, decoy chunks, and realistic misspellings
+  // (decoys follow common English spelling alternatives: ph/f, c/k, -on/-an, -ium/-inum, -el/-le, doubled letters).
+  var LADDER = {
+    1: ['hy dro gen', 'hi', 'Hidrogen Hydrogin Hydragen'], 2: ['he li um', 'le', 'Heleum Heliem Hellium'],
+    3: ['li thi um', 'ti', 'Lithiem Lithum Lythium'], 4: ['be ryl li um', 'ril', 'Berylium Berillium Beryllum'],
+    5: ['bor on', 'an', 'Boran Borron Boren'], 6: ['car bon', 'kar', 'Karbon Carbin Carban'],
+    7: ['ni tro gen', 'jen', 'Nitrogin Nitragen Nitrojen'], 8: ['ox y gen', 'i', 'Oxigen Oxogen Oxygin'],
+    9: ['flu or ine', 'een', 'Flourine Florine Fluorene'], 10: ['ne on', 'an', 'Nean Neeon Neone'],
+    11: ['so di um', 'de', 'Sodeum Sodiem Soduim'], 12: ['mag ne si um', 'zi', 'Magnezium Magnesuim Magnesiem'],
+    13: ['a lu mi num', 'me', 'Aluminun Alumanum Aluminam'], 14: ['si li con', 'kon', 'Silikon Silicone Silican'],
+    15: ['phos phor us', 'ous', 'Phosphorous Fosforus Phospherus'], 16: ['sul fur', 'fer', 'Sulfer Sulphar Sulfor'],
+    17: ['chlor ine', 'clor', 'Clorine Chloreen Chlorene'], 18: ['ar gon', 'gan', 'Argan Argen Argone'],
+    19: ['po tas si um', 'shi', 'Potasium Potassuim Pottasium'], 20: ['cal ci um', 'si', 'Calsium Calcuim Kalcium'],
+    21: ['scan di um', 'skan', 'Skandium Scandeum Scanduim'], 22: ['ti ta ni um', 'te', 'Titainium Titanuim Titaneum'],
+    23: ['va na di um', 'ne', 'Vanadeum Venadium Vanaduim'], 24: ['chro mi um', 'cro', 'Cromium Chromeum Chromuim'],
+    25: ['man ga nese', 'nees', 'Manganeese Mangenese Manganeze'], 26: ['i ron', 'ern', 'Iorn Irun Iren'],
+    27: ['co balt', 'bolt', 'Cobolt Kobalt Coballt'], 28: ['nick el', 'le', 'Nickle Nickal Nikel'],
+    29: ['cop per', 'pur', 'Coper Coppar Copar'], 30: ['z inc', 'ink', 'Zink Zync Zinck'],
+    35: ['bro mine', 'meen', 'Bromeen Bromene Brommine'], 36: ['kryp ton', 'krip', 'Kripton Kryptin Cripton'],
+    47: ['sil ver', 'vur', 'Silvur Sillver Silvar'], 50: ['t in', 'en', 'Tinn Tyn Ten'],
+    53: ['i o dine', 'deen', 'Iodene Iodeen Iodyne'], 78: ['plat i num', 'ni', 'Platinium Platnum Plattinum'],
+    79: ['g old', 'oald', 'Goald Golde Gould'], 80: ['mer cu ry', 'rie', 'Mercurie Murcury Merkury'],
+    82: ['l ead', 'ed', 'Led Lede Leed'], 86: ['ra don', 'den', 'Raden Raydon Radan'],
+    92: ['u ra ni um', 're', 'Uraneum Yuranium Uranuim'], 94: ['plu to ni um', 'ta', 'Plutoneum Plutonuim Plootonium']
+  };
+  EL.forEach(function (e) {
+    var L = LADDER[e.z];
+    e.chunks = L[0].split(' '); e.dchunks = L[1].split(' '); e.miss = L[2].split(' ');
+  });
   var SETS = {
     a: EL.filter(function (e) { return e.z <= 15; }),
     b: EL.filter(function (e) { return e.z >= 16 && e.z <= 30; }),
@@ -289,7 +373,7 @@
   // ---------------- storage (all calls guarded) ----------------
   var KEY = 'tklearn-element-flashcards-v1';
   var storeOK = true;
-  var S = { items: {}, newDay: -1, newCount: 0, set: 'a', catMode: 'type', best: {} };
+  var S = { items: {}, newDay: -1, newCount: 0, set: 'a', catMode: 'type', nameMode: 'ladder', best: {} };
   function load() {
     try {
       var raw = window.localStorage.getItem(KEY);
@@ -396,8 +480,9 @@
   function setTab(t) {
     tab = t;
     [].forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
-    ['cards', 'game', 'progress'].forEach(function (k) { document.getElementById('tab-' + k).hidden = k !== t; });
+    ['cards', 'sort', 'game', 'progress'].forEach(function (k) { document.getElementById('tab-' + k).hidden = k !== t; });
     if (t === 'progress') renderProgress();
+    if (t === 'sort') resetSort();
     if (t === 'cards') renderHome();
   }
   [].forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.addEventListener('click', function () { stopRun(); stopGame(); setTab(b.getAttribute('data-tab')); }); });
@@ -405,7 +490,7 @@
     S.set = k; save();
     [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.classList.toggle('on', b.getAttribute('data-set') === k); });
     stopRun(); stopGame();
-    renderHome(); renderProgress(); resetGameBoard();
+    renderHome(); renderProgress(); resetGameBoard(); resetSort();
   }
   [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.addEventListener('click', function () { setSet(b.getAttribute('data-set')); }); });
   function setCatMode(m) {
@@ -413,6 +498,19 @@
     [].forEach.call(document.querySelectorAll('[data-catmode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-catmode') === m); });
   }
   [].forEach.call(document.querySelectorAll('[data-catmode]'), function (b) { b.addEventListener('click', function () { setCatMode(b.getAttribute('data-catmode')); }); });
+  function setNameMode(m) {
+    S.nameMode = m; save();
+    [].forEach.call(document.querySelectorAll('[data-namemode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-namemode') === m); });
+  }
+  [].forEach.call(document.querySelectorAll('[data-namemode]'), function (b) { b.addEventListener('click', function () { setNameMode(b.getAttribute('data-namemode')); }); });
+  // Which ladder step a symbol -> name card gets, from its spaced-repetition box.
+  // 1 = pick the real spelling, 2 = build from chunks, 5 = type it cold (quiz conditions).
+  function stepFor(id) {
+    if (S.nameMode === 'type') return 5;
+    var b = boxOf(id);
+    return b <= 1 ? 1 : b === 2 ? 2 : 5;
+  }
+  var STEPNAME = { 1: 'Step 1 of 3 · Pick the real spelling', 2: 'Step 2 of 3 · Build the name', 5: 'Step 3 of 3 · Type it' };
 
   // ---------------- flashcards ----------------
   function renderHome() {
@@ -458,13 +556,26 @@
   function showCard() {
     if (!run.queue.length) return finishRun();
     var id = run.queue[0], e = BYZ[parseInt(id, 10)], dir = id.slice(-1);
-    run.cur = { id: id, e: e, dir: dir, tries: 0 };
-    run.catSel = null;
+    run.cur = { id: id, e: e, dir: dir, tries: 0, step: dir === 's' ? stepFor(id) : 5 };
+    run.catSel = null; run.optSel = null; run.built = [];
     document.getElementById('fcCount').textContent = run.done + ' done · ' + run.queue.length + ' to go';
     var face = document.getElementById('fcFace');
     if (dir === 's') {
       face.innerHTML = '<span class="z">' + e.z + '</span><div class="sym">' + e.sym + '</div><div class="ask">Name? Metal, nonmetal, or metalloid?</div>';
-      var html = input('name', 'Name');
+      var st = run.cur.step, html = S.nameMode === 'ladder' ? '<div class="step" id="fcStep">' + STEPNAME[st] + '</div>' : '';
+      if (st === 1) {
+        html += '<div class="field" id="f-name"><label>Which is the real spelling?</label><div class="opts">' +
+          shuffle([e.name].concat(shuffle(e.miss.slice()).slice(0, 2))).map(function (o) {
+            return '<button type="button" class="opt" data-o="' + o + '">' + o + '</button>'; }).join('') +
+          '</div><div class="fb" id="fb-name"></div></div>';
+      } else if (st === 2) {
+        html += '<div class="field" id="f-name"><label>Build the name: tap the pieces in order</label><div class="built" id="built"></div>' +
+          '<div class="tiles" id="tiles">' + shuffle(e.chunks.concat(e.dchunks)).map(function (t, k) {
+            return '<button type="button" class="tile" data-t="' + t + '" data-k="' + k + '">' + t + '</button>'; }).join('') +
+          '</div><div class="fb" id="fb-name"></div></div>';
+      } else {
+        html += input('name', 'Name');
+      }
       if (S.catMode === 'tap') {
         html += '<div class="field" id="f-cat"><label>Metal, nonmetal, or metalloid?</label><div class="cats">' +
           ['metal', 'nonmetal', 'metalloid'].map(function (c) { return '<button type="button" class="cat" data-c="' + c + '">' + c + '</button>'; }).join('') +
@@ -473,6 +584,21 @@
         html += input('cat', 'Metal, nonmetal, or metalloid?');
       }
       document.getElementById('fcInputs').innerHTML = html;
+      [].forEach.call(document.querySelectorAll('#fcInputs .opt'), function (b) {
+        b.addEventListener('click', function () {
+          if (run.cur.locked) return;
+          run.optSel = b.getAttribute('data-o');
+          [].forEach.call(document.querySelectorAll('#fcInputs .opt'), function (x) { x.classList.toggle('sel', x === b); });
+        });
+      });
+      [].forEach.call(document.querySelectorAll('#fcInputs .tile'), function (b) {
+        b.addEventListener('click', function () {
+          if (run.cur.locked || b.classList.contains('used')) return;
+          b.classList.add('used');
+          run.built.push(b);
+          renderBuilt();
+        });
+      });
       [].forEach.call(document.querySelectorAll('#fcInputs .cat'), function (b) {
         b.addEventListener('click', function () {
           if (run.cur.locked) return;
@@ -499,6 +625,22 @@
     if (inputs[0]) inputs[0].focus();
   }
 
+  function renderBuilt() {
+    var box = document.getElementById('built');
+    box.className = 'built';
+    box.innerHTML = '';
+    run.built.forEach(function (b, k) {
+      var t = document.createElement('button');
+      t.type = 'button'; t.className = 'tile'; t.textContent = b.getAttribute('data-t');
+      t.addEventListener('click', function () {  // tap a placed piece to send it back
+        if (run.cur.locked) return;
+        run.built.splice(k, 1); b.classList.remove('used'); renderBuilt();
+      });
+      box.appendChild(t);
+    });
+  }
+  function builtName() { return run.built.map(function (b) { return b.getAttribute('data-t'); }).join(''); }
+
   function mark(field, res, msg) {
     var f = document.getElementById('f-' + field);
     if (f) f.className = 'field ' + res;
@@ -510,9 +652,21 @@
     if (c.locked) return;
     c.tries++;
     if (c.dir === 's') {
-      var rn = checkName(document.getElementById('in-name').value, e);
+      var rn;
+      if (c.step === 1) {
+        rn = run.optSel === e.name ? 'right' : 'wrong';
+        mark('name', rn, rn === 'right' ? 'Right.' : '');
+      } else if (c.step === 2) {
+        rn = builtName() === e.name.toLowerCase() ? 'right' : 'wrong';
+        document.getElementById('built').className = 'built ' + rn;
+        mark('name', rn, rn === 'right' ? 'Right.' : '');
+      } else {
+        rn = checkName(document.getElementById('in-name').value, e);
+        // Spelling doesn't count on the quiz: a near miss is right, and the correct spelling is shown.
+        if (rn === 'close') { mark('name', 'right', 'Counts! It is spelled ' + e.name + '.'); rn = 'right'; c.spelled = true; }
+        else mark('name', rn, rn === 'right' ? 'Right.' : '');
+      }
       results.push(rn);
-      mark('name', rn, rn === 'right' ? 'Right.' : rn === 'close' ? 'Close. Check your spelling.' : '');
       var rc;
       if (S.catMode === 'tap') {
         rc = run.catSel === e.cat ? 'right' : 'wrong';
@@ -520,7 +674,8 @@
         mark('cat', rc, rc === 'right' ? 'Right.' : '');
       } else {
         rc = checkCat(document.getElementById('in-cat').value, e);
-        mark('cat', rc, rc === 'right' ? 'Right.' : rc === 'close' ? 'Close. Check your spelling.' : '');
+        if (rc === 'close') { rc = 'right'; mark('cat', 'right', 'Counts! It is spelled ' + e.cat + '.'); }
+        else mark('cat', rc, rc === 'right' ? 'Right.' : '');
       }
       results.push(rc);
     } else {
@@ -551,6 +706,10 @@
       run.done++;
     }
     [].forEach.call(document.querySelectorAll('#fcInputs input'), function (i) { i.readOnly = true; });
+    [].forEach.call(document.querySelectorAll('#fcInputs .opt'), function (b) {
+      var o = b.getAttribute('data-o');
+      if (o === e.name) b.classList.add('right'); else if (o === run.optSel) b.classList.add('wrong');
+    });
     [].forEach.call(document.querySelectorAll('#fcInputs .cat'), function (b) {
       var cc = b.getAttribute('data-c');
       if (cc === e.cat) b.classList.add('right'); else if (cc === run.catSel) b.classList.add('wrong');
@@ -584,6 +743,125 @@
     document.getElementById('fcStop').textContent = 'Back';
     run.queue = [];
   }
+
+  // ---------------- Sort: drag from the table into metal / metalloid / nonmetal ovals ----------------
+  var sCells = {}, sPlaced = {}, sPicked = null, sDrag = null;   // sPlaced[z] = oval category it was put in
+  function resetSort() {
+    sPlaced = {}; sPicked = null;
+    sCells = buildBoard(document.getElementById('sBoard'), {});
+    var inSet = {}; SETS[S.set].forEach(function (e) { inSet[e.z] = 1; });
+    Object.keys(sCells).forEach(function (k) {
+      var z = +k, n = sCells[z];
+      if (!inSet[z]) { n.style.opacity = '.3'; return; }
+      n.classList.add('sortable');
+      n.setAttribute('role', 'button');
+      n.setAttribute('aria-label', BYZ[z].name + ', ' + BYZ[z].sym);
+      n.addEventListener('pointerdown', function (ev) { startSortDrag(ev, z, n); });
+    });
+    [].forEach.call(document.querySelectorAll('#ovals .in'), function (x) { x.innerHTML = ''; });
+    document.getElementById('sScore').textContent = '';
+    document.getElementById('sRetry').hidden = true;
+    document.getElementById('sRule').hidden = true;
+  }
+  function clearSortMarks() {
+    [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) { c.classList.remove('right', 'wrong'); });
+    document.getElementById('sScore').textContent = '';
+    document.getElementById('sRetry').hidden = true;
+  }
+  function unpickSort() {
+    sPicked = null;
+    [].forEach.call(document.querySelectorAll('#tab-sort .pick'), function (x) { x.classList.remove('pick'); });
+  }
+  function placeIn(z, cat) {
+    clearSortMarks();
+    removeChip(z);
+    sPlaced[z] = cat;
+    sCells[z].classList.add('placed');
+    var chip = document.createElement('button');
+    chip.type = 'button'; chip.className = 'chip'; chip.textContent = BYZ[z].sym; chip.setAttribute('data-z', z);
+    chip.title = BYZ[z].name;
+    chip.addEventListener('pointerdown', function (ev) { startSortDrag(ev, z, chip); });
+    document.querySelector('#ovals .oval[data-c="' + cat + '"] .in').appendChild(chip);
+  }
+  function removeChip(z) {
+    var old = document.querySelector('#ovals .chip[data-z="' + z + '"]');
+    if (old) old.parentNode.removeChild(old);
+  }
+  function backToTable(z) {
+    clearSortMarks(); removeChip(z); delete sPlaced[z]; sCells[z].classList.remove('placed');
+  }
+  function ovalAt(x, y) {
+    var el = document.elementFromPoint(x, y);
+    while (el && !(el.classList && el.classList.contains('oval'))) el = el.parentNode;
+    return el && el.classList ? el : null;
+  }
+  function startSortDrag(ev, z, src) {
+    if (ev.button !== undefined && ev.button !== 0) return;
+    sDrag = { z: z, src: src, x0: ev.clientX, y0: ev.clientY, moved: false, ghost: null, over: null };
+    try { src.setPointerCapture(ev.pointerId); } catch (e) {}
+    src.addEventListener('pointermove', onSortMove);
+    src.addEventListener('pointerup', onSortUp);
+    src.addEventListener('pointercancel', onSortCancel);
+  }
+  function onSortMove(ev) {
+    var d = sDrag; if (!d) return;
+    if (!d.moved && Math.abs(ev.clientX - d.x0) + Math.abs(ev.clientY - d.y0) < 8) return;
+    if (!d.moved) {
+      d.moved = true; unpickSort();
+      d.ghost = document.createElement('div'); d.ghost.className = 'ghost'; d.ghost.textContent = BYZ[d.z].sym;
+      document.body.appendChild(d.ghost);
+    }
+    ev.preventDefault();
+    d.ghost.style.left = ev.clientX + 'px'; d.ghost.style.top = ev.clientY + 'px';
+    var o = ovalAt(ev.clientX, ev.clientY);
+    if (d.over && d.over !== o) d.over.classList.remove('hover');
+    if (o) o.classList.add('hover');
+    d.over = o;
+  }
+  function endSortDrag() {
+    var d = sDrag; if (!d) return null;
+    d.src.removeEventListener('pointermove', onSortMove);
+    d.src.removeEventListener('pointerup', onSortUp);
+    d.src.removeEventListener('pointercancel', onSortCancel);
+    if (d.ghost) d.ghost.parentNode.removeChild(d.ghost);
+    if (d.over) d.over.classList.remove('hover');
+    sDrag = null;
+    return d;
+  }
+  function onSortCancel() { endSortDrag(); }
+  function onSortUp(ev) {
+    var d = endSortDrag(); if (!d) return;
+    if (d.moved) {
+      var o = ovalAt(ev.clientX, ev.clientY);
+      if (o) placeIn(d.z, o.getAttribute('data-c'));
+      else if (sPlaced[d.z] && d.src.classList.contains('chip')) backToTable(d.z);
+      return;
+    }
+    // a tap: pick it up (tap an oval next), or tap a picked chip again to send it back
+    if (sPicked === d.z) { if (sPlaced[d.z]) backToTable(d.z); unpickSort(); return; }
+    unpickSort(); sPicked = d.z; d.src.classList.add('pick');
+  }
+  [].forEach.call(document.querySelectorAll('#ovals .oval'), function (o) {
+    o.addEventListener('click', function (ev) {
+      if (sPicked == null || (ev.target.classList && ev.target.classList.contains('chip'))) return;
+      var z = sPicked; unpickSort(); placeIn(z, o.getAttribute('data-c'));
+    });
+  });
+  document.getElementById('sCheck').addEventListener('click', function () {
+    var right = 0, wrong = 0, left = SETS[S.set].filter(function (e) { return !sPlaced[e.z]; }).length;
+    [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) {
+      var z = +c.getAttribute('data-z'), ok = sPlaced[z] === BYZ[z].cat;
+      c.classList.add(ok ? 'right' : 'wrong'); if (ok) right++; else wrong++;
+    });
+    document.getElementById('sScore').textContent = right + ' / ' + SETS[S.set].length + ' right' + (left ? ' · ' + left + ' still on the table' : '');
+    document.getElementById('sRetry').hidden = !wrong;
+    if (!wrong && !left) document.getElementById('sRule').hidden = false;
+  });
+  document.getElementById('sRetry').addEventListener('click', function () {
+    Object.keys(sPlaced).forEach(function (k) { if (sPlaced[k] !== BYZ[k].cat) backToTable(+k); });
+    [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) { c.classList.add('right'); });
+  });
+  document.getElementById('sReset').addEventListener('click', resetSort);
 
   // ---------------- Find the Elements ----------------
   var g = null, gCells = {}, gTimer = null;
@@ -696,6 +974,7 @@
 
   // ---------------- start ----------------
   setCatMode(S.catMode === 'tap' ? 'tap' : 'type');
+  setNameMode(S.nameMode === 'type' ? 'type' : 'ladder');
   setSet(S.set);
   setTab('cards');
 
