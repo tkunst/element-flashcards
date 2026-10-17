@@ -380,16 +380,27 @@ def connections_spelling_blank(browser):
         check(sym in BY_SYM and BY_SYM[sym][2] == name, f"solved label shows wrong capitals: {lab!r}")
     check(page.locator("#cxMsg").inner_text().startswith("Solved! 2 mistakes"), f"solved message: {page.locator('#cxMsg').inner_text()}")
 
-    # --- Connections, same family: the five periodic-table families, 5 groups of 3 ---
+    # --- Connections, same family: 5 groups of 4 = 3 elements (symbol + name on one tile) + a map of the whole family ---
     page.click('[data-cxmode="fam"]')
-    check(page.locator("#cxGrid .cx").count() == 15, "family puzzle should have 15 tiles")
+    check(page.locator("#cxGrid .cx").count() == 20, "family puzzle should have 20 tiles")
+    check(page.locator("#cxGrid .cx.map").count() == 5 and page.locator("#cxGrid .cx.el2").count() == 15, "5 family maps + 15 element tiles")
+    fam_all = {"Alkali metals": {3, 11, 19, 37, 55, 87}, "Alkaline": {4, 12, 20, 38, 56, 88}, "Halogens": {9, 17, 35, 53, 85, 117}, "Noble": {2, 10, 18, 36, 54, 86, 118}}
     for g in range(5):
-        for _ in range(3):
+        lit = {int(z) for z in page.locator(f'#cxGrid .cx.map[data-g="{g}"] .sq.hit').evaluate_all("els => els.map(e => e.dataset.z)")}
+        els = page.locator(f'#cxGrid .cx.el2[data-g="{g}"] .s2').all_inner_texts()
+        check(all(BY_SYM[x][0] in lit for x in els), f"group {g}: elements {els} must be inside their family map")
+        for _ in range(4):
             page.locator(f'#cxGrid .cx[data-g="{g}"]:not(.sel)').first.click()
         page.click("#cxSubmit")
     labels = page.locator("#cxSolved .lab").all_inner_texts()
     want = ["Alkali metals (group 1)", "Alkaline earth metals (group 2)", "Transition metals (groups 3-12)", "Halogens (group 17)", "Noble gases (group 18)"]
     check(sorted(labels) == sorted(want), f"family labels: {labels}")
+    for lab_el in page.locator("#cxSolved .cx-solved").all():
+        lab = lab_el.locator(".lab").inner_text()
+        lit = {int(z) for z in lab_el.locator(".sq.hit").evaluate_all("els => els.map(e => e.dataset.z)")}
+        for key, zs in fam_all.items():
+            if lab.startswith(key):
+                check(lit == zs, f"{lab}: map should light exactly {sorted(zs)}, got {sorted(lit)}")
     check(page.locator("#cxMsg").inner_text().startswith("Solved!"), "family puzzle should solve")
 
     # --- Spelling: three views. Morphemes (default) list every name's meaning exactly once ---

@@ -132,6 +132,7 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; font-weight: 800; overflow-wrap: anywhere; }
   .cx.sym { font-size: 1.9em; } .cx.nm { font-size: 1em; } .cx.num { font-size: 1.3em; color: #555; }
   .cx .board.mini { width: 100%; max-width: 150px; margin: 0; }
+  .cx.el2 .s2 { font-size: 1.6em; line-height: 1.1; } .cx.el2 .n2 { font-size: .85em; }
   .cx.sel { background: #dfeaff; border-color: var(--blue); }
   .cx.shake { animation: shake .35s; }
   @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
@@ -1050,11 +1051,13 @@
   // "Same family": 4 elements from each of 4 families, shown as symbols or names.
   var FAMS = [
     // The five periodic-table families (H is NOT an alkali metal). 3 per group: her list has only 3 alkali + 3 alkaline earth metals.
-    { label: 'Alkali metals (group 1)', zs: [3, 11, 19] },
-    { label: 'Alkaline earth metals (group 2)', zs: [4, 12, 20] },
-    { label: 'Transition metals (groups 3-12)', zs: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 78, 79, 80] },
-    { label: 'Halogens (group 17)', zs: [9, 17, 35, 53] },
-    { label: 'Noble gases (group 18)', zs: [2, 10, 18, 36, 86] }
+    // zs = family members on her list of 42; all = the whole family on the table (for the map tile).
+    { label: 'Alkali metals (group 1)', zs: [3, 11, 19], all: [3, 11, 19, 37, 55, 87] },
+    { label: 'Alkaline earth metals (group 2)', zs: [4, 12, 20], all: [4, 12, 20, 38, 56, 88] },
+    { label: 'Transition metals (groups 3-12)', zs: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 78, 79, 80],
+      all: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 72, 73, 74, 75, 76, 77, 78, 79, 80, 104, 105, 106, 107, 108, 109, 110, 111, 112] },
+    { label: 'Halogens (group 17)', zs: [9, 17, 35, 53], all: [9, 17, 35, 53, 85, 117] },
+    { label: 'Noble gases (group 18)', zs: [2, 10, 18, 36, 86], all: [2, 10, 18, 36, 54, 86, 118] }
   ];
   var cx = null;
   function cxMode() { return S.cxMode === 'fam' ? 'fam' : 'el'; }
@@ -1063,7 +1066,7 @@
     [].forEach.call(document.querySelectorAll('[data-cxmode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-cxmode') === mode); });
     document.getElementById('cxHow').textContent = mode === 'el'
       ? 'Find 4 groups of 4. Each group is one element: its symbol, its name, its atomic number, and its spot on the table. Tap 4 tiles, then Submit.'
-      : 'Find 5 groups of 3 elements from the same periodic-table family: alkali metals, alkaline earth metals, transition metals, halogens, and noble gases. Tap 3 tiles, then Submit.';
+      : 'Find 5 groups of 4. Each group is one periodic-table family: 3 of its elements plus a map with the whole family lit up. The families: alkali metals, alkaline earth metals, transition metals, halogens, noble gases. Tap 4 tiles, then Submit.';
     var tiles = [];
     if (mode === 'el') {
       var pool = shuffle(SETS[S.set].map(function (e) { return e.z; })).slice(0, 4);
@@ -1075,14 +1078,14 @@
       });
     } else {
       FAMS.forEach(function (f, gi) {
-        groups.push({ label: f.label });
+        groups.push({ label: f.label, zs: f.all });
         shuffle(f.zs.slice()).slice(0, 3).forEach(function (z) {
-          var e = BYZ[z], useSym = Math.random() < 0.5;
-          tiles.push({ g: gi, kind: useSym ? 'sym' : 'nm', text: useSym ? e.sym : e.name, z: z });
+          tiles.push({ g: gi, kind: 'el2', z: z });   // symbol + name on one tile
         });
+        tiles.push({ g: gi, kind: 'map', zs: f.all });  // the whole family lit up
       });
     }
-    cx = { groups: groups, tiles: shuffle(tiles), sel: [], solved: [], mistakes: 0, size: mode === 'el' ? 4 : 3 };
+    cx = { groups: groups, tiles: shuffle(tiles), sel: [], solved: [], mistakes: 0, size: 4 };
     document.getElementById('cxGrid').style.gridTemplateColumns = 'repeat(' + (cx.size === 4 ? 4 : 3) + ', 1fr)';
     renderCx();
   }
@@ -1096,7 +1099,10 @@
       if (t.kind === 'map') {
         b.setAttribute('aria-label', 'Location on the periodic table');
         var m = document.createElement('div'); m.className = 'board mini'; b.appendChild(m);
-        buildBoard(m, { mini: true })[t.z].classList.add('hit');
+        var mc = buildBoard(m, { mini: true });
+        (t.zs || [t.z]).forEach(function (z) { mc[z].classList.add('hit'); });
+      } else if (t.kind === 'el2') {
+        b.innerHTML = '<span class="s2">' + BYZ[t.z].sym + '</span><span class="n2">' + BYZ[t.z].name + '</span>';
       } else b.textContent = t.text;
       b.addEventListener('click', function () {
         var k = cx.sel.indexOf(i);
@@ -1112,7 +1118,11 @@
       var d = document.createElement('div'), gr = cx.groups[gi];
       d.className = 'cx-solved g' + gi;
       d.innerHTML = '<div class="lab">' + gr.label + '</div>';
-      if (gr.z) { var m = document.createElement('div'); m.className = 'board mini'; d.appendChild(m); buildBoard(m, { mini: true })[gr.z].classList.add('hit'); }
+      if (gr.z || gr.zs) {
+        var m = document.createElement('div'); m.className = 'board mini'; d.appendChild(m);
+        var mc = buildBoard(m, { mini: true });
+        (gr.zs || [gr.z]).forEach(function (z) { mc[z].classList.add('hit'); });
+      }
       sol.appendChild(d);
     });
     document.getElementById('cxSubmit').disabled = cx.sel.length !== cx.size;
