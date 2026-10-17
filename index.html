@@ -138,7 +138,7 @@
   .cx-solved { border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; font-weight: 700; }
   .cx-solved .lab { font-size: 1em; }
   .cx-solved .board.mini { max-width: 160px; }
-  .g0 { background: #fbe3a6; } .g1 { background: #bfe3c7; } .g2 { background: #c7d8f5; } .g3 { background: #e3c9ef; }
+  .g0 { background: #fbe3a6; } .g1 { background: #bfe3c7; } .g2 { background: #c7d8f5; } .g3 { background: #e3c9ef; } .g4 { background: #f7c9c0; }
   .fams { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
   .fam { border-radius: 12px; padding: 12px 14px; border: 2px solid rgba(0,0,0,.08); }
   .fam h3 { margin: 0 0 4px; font-size: 1.1em; }
@@ -1064,10 +1064,12 @@
   // 16 tiles, 4 hidden groups. "Same element": symbol, name, atomic number, and location (mini map) of 4 elements.
   // "Same family": 4 elements from each of 4 families, shown as symbols or names.
   var FAMS = [
-    { label: 'Halogens', zs: [9, 17, 35, 53] },
-    { label: 'Noble gases', zs: [2, 10, 18, 36, 86] },
-    { label: 'Alkali & alkaline earth metals (groups 1-2)', zs: [3, 4, 11, 12, 19, 20] },
-    { label: 'Transition metals', zs: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 78, 79, 80] }
+    // The five periodic-table families (H is NOT an alkali metal). 3 per group: her list has only 3 alkali + 3 alkaline earth metals.
+    { label: 'Alkali metals (group 1)', zs: [3, 11, 19] },
+    { label: 'Alkaline earth metals (group 2)', zs: [4, 12, 20] },
+    { label: 'Transition metals (groups 3-12)', zs: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 78, 79, 80] },
+    { label: 'Halogens (group 17)', zs: [9, 17, 35, 53] },
+    { label: 'Noble gases (group 18)', zs: [2, 10, 18, 36, 86] }
   ];
   var cx = null;
   function cxMode() { return S.cxMode === 'fam' ? 'fam' : 'el'; }
@@ -1076,7 +1078,7 @@
     [].forEach.call(document.querySelectorAll('[data-cxmode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-cxmode') === mode); });
     document.getElementById('cxHow').textContent = mode === 'el'
       ? 'Find 4 groups of 4. Each group is one element: its symbol, its name, its atomic number, and its spot on the table. Tap 4 tiles, then Submit.'
-      : 'Find 4 groups of 4 elements from the same family (all 42 elements). Tap 4 tiles, then Submit.';
+      : 'Find 5 groups of 3 elements from the same periodic-table family: alkali metals, alkaline earth metals, transition metals, halogens, and noble gases. Tap 3 tiles, then Submit.';
     var tiles = [];
     if (mode === 'el') {
       var pool = shuffle(SETS[S.set].map(function (e) { return e.z; })).slice(0, 4);
@@ -1089,13 +1091,14 @@
     } else {
       FAMS.forEach(function (f, gi) {
         groups.push({ label: f.label });
-        shuffle(f.zs.slice()).slice(0, 4).forEach(function (z) {
+        shuffle(f.zs.slice()).slice(0, 3).forEach(function (z) {
           var e = BYZ[z], useSym = Math.random() < 0.5;
           tiles.push({ g: gi, kind: useSym ? 'sym' : 'nm', text: useSym ? e.sym : e.name, z: z });
         });
       });
     }
-    cx = { groups: groups, tiles: shuffle(tiles), sel: [], solved: [], mistakes: 0 };
+    cx = { groups: groups, tiles: shuffle(tiles), sel: [], solved: [], mistakes: 0, size: mode === 'el' ? 4 : 3 };
+    document.getElementById('cxGrid').style.gridTemplateColumns = 'repeat(' + (cx.size === 4 ? 4 : 3) + ', 1fr)';
     renderCx();
   }
   function renderCx() {
@@ -1112,7 +1115,7 @@
       } else b.textContent = t.text;
       b.addEventListener('click', function () {
         var k = cx.sel.indexOf(i);
-        if (k >= 0) cx.sel.splice(k, 1); else if (cx.sel.length < 4) cx.sel.push(i);
+        if (k >= 0) cx.sel.splice(k, 1); else if (cx.sel.length < cx.size) cx.sel.push(i);
         document.getElementById('cxMsg').textContent = '';
         renderCx();
       });
@@ -1127,16 +1130,16 @@
       if (gr.z) { var m = document.createElement('div'); m.className = 'board mini'; d.appendChild(m); buildBoard(m, { mini: true })[gr.z].classList.add('hit'); }
       sol.appendChild(d);
     });
-    document.getElementById('cxSubmit').disabled = cx.sel.length !== 4;
+    document.getElementById('cxSubmit').disabled = cx.sel.length !== cx.size;
     if (!cx.tiles.length) document.getElementById('cxMsg').textContent = 'Solved! ' + (cx.mistakes ? cx.mistakes + ' mistake' + (cx.mistakes > 1 ? 's' : '') + '.' : 'No mistakes!');
   }
   document.getElementById('cxSubmit').addEventListener('click', function () {
-    if (!cx || cx.sel.length !== 4) return;
+    if (!cx || cx.sel.length !== cx.size) return;
     var gs = cx.sel.map(function (i) { return cx.tiles[i].g; }), counts = {};
     gs.forEach(function (g) { counts[g] = (counts[g] || 0) + 1; });
     var top = Math.max.apply(null, Object.keys(counts).map(function (k) { return counts[k]; }));
     var msg = document.getElementById('cxMsg');
-    if (top === 4) {
+    if (top === cx.size) {
       var gi = gs[0], keep = [];
       cx.tiles.forEach(function (t, i) { if (cx.sel.indexOf(i) < 0) keep.push(t); });
       cx.tiles = keep; cx.sel = []; cx.solved.push(gi);
@@ -1144,7 +1147,7 @@
       renderCx();
     } else {
       cx.mistakes++;
-      msg.textContent = top === 3 ? 'One away!' : 'Not a group. Try again.';
+      msg.textContent = top === cx.size - 1 ? 'One away!' : 'Not a group. Try again.';
       [].forEach.call(document.querySelectorAll('#cxGrid .cx.sel'), function (b) { b.classList.add('shake'); });
     }
   });

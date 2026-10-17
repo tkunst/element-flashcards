@@ -374,13 +374,17 @@ def connections_spelling_blank(browser):
         check(sym in BY_SYM and BY_SYM[sym][2] == name, f"solved label shows wrong capitals: {lab!r}")
     check(page.locator("#cxMsg").inner_text().startswith("Solved! 2 mistakes"), f"solved message: {page.locator('#cxMsg').inner_text()}")
 
-    # --- Connections, same family ---
+    # --- Connections, same family: the five periodic-table families, 5 groups of 3 ---
     page.click('[data-cxmode="fam"]')
-    check(page.locator("#cxGrid .cx").count() == 16, "family puzzle should have 16 tiles")
-    for g in range(4):
-        pick([g] * 4)
+    check(page.locator("#cxGrid .cx").count() == 15, "family puzzle should have 15 tiles")
+    for g in range(5):
+        for _ in range(3):
+            page.locator(f'#cxGrid .cx[data-g="{g}"]:not(.sel)').first.click()
+        page.click("#cxSubmit")
     labels = page.locator("#cxSolved .lab").all_inner_texts()
-    check("Halogens" in labels and "Noble gases" in labels, f"family labels: {labels}")
+    want = ["Alkali metals (group 1)", "Alkaline earth metals (group 2)", "Transition metals (groups 3-12)", "Halogens (group 17)", "Noble gases (group 18)"]
+    check(sorted(labels) == sorted(want), f"family labels: {labels}")
+    check(page.locator("#cxMsg").inner_text().startswith("Solved!"), "family puzzle should solve")
 
     # --- Spelling: three views. Morphemes (default) list every name's meaning exactly once ---
     page.click('[data-tab="spell"]')
