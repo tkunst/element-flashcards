@@ -544,6 +544,8 @@ def data_checks():
     check(say["Hydrogen"].replace("ˈ", "").startswith("haɪ") and "ksə" in say["Oxygen"], "y claims: Hydrogen 'eye', Oxygen 'uh'")
     origin = dict(re.findall(r"(\w+): '([^']+)'", html[html.index("var ORIGIN = {"):html.index("var NAMEZ")]))
     check(sorted(origin) == sorted(v[1] for v in EL.values()), "every name needs a meaning (ORIGIN)")
+    for n, o in origin.items():   # the language goes right after the word: "iodes (Greek) = violet", not "iodes = violet (Greek)"
+        check(not re.search(r"= [^;]*\((Greek|Latin|German|Spanish)\)", o), f"{n}: put the language right after the word: {o}")
     print("ok  data: 42 recorded clips; phoneme claims match the IPA; graphemes (1-4 letters) spell all 42 names; no ladder piece splits a team; -on sound claims match the IPA")
 
 
