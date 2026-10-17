@@ -423,6 +423,7 @@ def connections_spelling_blank(browser):
     check(mg.count() == 2 and mg.nth(0).locator("h3").all_inner_texts()[:2] == ['-gen: "maker"', "Symbols from older names"]
           and all(h.startswith("Naming pattern") for h in mg.nth(1).locator("h3").all_inner_texts()), "morphemes first, then naming patterns")
     origins = page.locator("#fams .origins .fname").all_inner_texts()
+    check(page.locator("#fams .origins .fname").first.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(217, 242, 223)", "origin name labels should be light green")
     hy = page.locator('#fams .origins .orow:has-text("hydro + gen") .wsum')
     check(hy.count() == 2 and all(b["height"] < 30 for b in [hy.nth(i).bounding_box() for i in range(2)]), "each hydrogen word sum should sit on one line")
     check(sorted(origins) == sorted(v[1] for v in EL.values()), "Where each name comes from must list all 42 names once")
