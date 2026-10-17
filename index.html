@@ -147,6 +147,7 @@
   .fam { border-radius: 12px; padding: 12px 14px; border: 2px solid rgba(0,0,0,.08); }
   .fam h3 { margin: 0 0 4px; font-size: 1.1em; }
   .fam .tip { font-size: .92em; color: #333; margin: 0 0 8px; }
+  .fam .tip b { white-space: nowrap; }  /* keep an ending like -um together on one line */
   .fam .names { display: flex; flex-wrap: wrap; gap: 6px; }
   .fname { font: inherit; font-weight: 700; padding: 5px 10px; border: 1.5px solid rgba(0,0,0,.25); border-radius: 8px; background: rgba(255,255,255,.75); cursor: pointer; color: var(--ink); }
   .fname b { color: #b3261e; text-decoration: underline; text-decoration-thickness: 2px; }
@@ -1190,12 +1191,12 @@
     morph: {
       def: 'A <b>morpheme</b> is the smallest part of a word that carries meaning. Most element names are built from a meaning part plus an ending.',
       cards: [
-        ['-ium and -um: the metal ending', 'Chemists end most metal names with <b>-ium</b>, said /iəm/. (Helium got it because scientists first thought it was a metal.) Aluminum and Platinum use <b>-um</b>.',
-          'Hel[ium] Lith[ium] Beryll[ium] Sod[ium] Magnes[ium] Potass[ium] Calc[ium] Scand[ium] Titan[ium] Vanad[ium] Chrom[ium] Uran[ium] Pluton[ium] Alumin[um] Platin[um]'],
-        ['-ine: the halogen ending', 'All four halogens here end in <b>-ine</b>.', 'Fluor[ine] Chlor[ine] Brom[ine] Iod[ine]'],
-        ['-on', 'Four of the five noble gases on this list end in <b>-on</b>: Neon, Argon, Krypton and Radon (the fifth, Helium, ends in -ium). Boron, Carbon and Silicon also end in <b>-on</b>, but they are not noble gases: Boron and Silicon are metalloids, and Carbon is a nonmetal.', 'Ne[on] Arg[on] Krypt[on] Rad[on] Bor[on] Carb[on] Silic[on]'],
         ['-gen: "maker"', '<b>-gen</b> means maker. It comes from Greek <b>-genēs</b>, "born of, made by", the same family as <b>gene</b>, <b>genesis</b> and <b>generate</b>. <b>hydro</b> = water, <b>oxy</b> = sharp or acid, <b>nitro</b> = niter (a salt). The French chemist Lavoisier named hydrogen "water-maker" because it burns to make water, and oxygen "acid-maker" because he thought every acid had oxygen in it. He was wrong about acids, but the name stuck.', 'Hydro[gen] Nitro[gen] Oxy[gen]'],
-        ['Symbols from older names', 'These symbols come from the element\'s Latin name, not the English one. The Latin word is the meaning part.', '*latin']
+        ['Symbols from older names', 'These symbols come from the element\'s Latin name, not the English one. The Latin word is the meaning part.', '*latin'],
+        ['Naming pattern: -ium and -um for metals', 'Chemists end most metal names with <b>-ium</b>, said /iəm/. (Helium got it because scientists first thought it was a metal.) Aluminum and Platinum use <b>-um</b>.',
+          'Hel[ium] Lith[ium] Beryll[ium] Sod[ium] Magnes[ium] Potass[ium] Calc[ium] Scand[ium] Titan[ium] Vanad[ium] Chrom[ium] Uran[ium] Pluton[ium] Alumin[um] Platin[um]'],
+        ['Naming pattern: -ine for halogens', 'All four halogens here end in <b>-ine</b>.', 'Fluor[ine] Chlor[ine] Brom[ine] Iod[ine]'],
+        ['Naming pattern: -on', 'Four of the five noble gases on this list end in <b>-on</b>: Neon, Argon, Krypton and Radon (the fifth, Helium, ends in -ium). Boron, Carbon and Silicon also end in <b>-on</b>, but they are not noble gases: Boron and Silicon are metalloids, and Carbon is a nonmetal.', 'Ne[on] Arg[on] Krypt[on] Rad[on] Bor[on] Carb[on] Silic[on]']
       ]
     },
     graph: {
@@ -1313,7 +1314,11 @@
       return '<div class="fam f' + (i % 9) + (c[2] === '*all' ? ' allg' : '') + '"><h3>' + c[0] + '</h3><p class="tip">' + c[1] + '</p><div class="names">' + items + '</div></div>';
     }
     var html;
-    if (view === 'phon') {  // two groups with a little space between: same sound / same spelling
+    if (view === 'morph') {  // true morphemes first, then naming patterns, with a little space between
+      html = [cards.slice(0, 2), cards.slice(2)].map(function (g, gi) {
+        return '<div class="fgroup">' + g.map(function (c, i) { return cardHTML(c, i + gi * 2); }).join('') + '</div>';
+      }).join('');
+    } else if (view === 'phon') {  // two groups with a little space between: same sound / same spelling
       var groups = [cards.filter(function (c) { return c[0].indexOf('Same Sound') === 0; }),
                     cards.filter(function (c) { return c[0].indexOf('Same Sound') !== 0; })];
       html = groups.map(function (g, gi) {

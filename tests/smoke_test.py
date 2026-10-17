@@ -413,6 +413,9 @@ def connections_spelling_blank(browser):
     # --- Spelling: three views. Morphemes (default) list every name's meaning exactly once ---
     page.click('[data-tab="spell"]')
     check("morpheme" in page.locator("#spellDef").inner_text(), "Spelling should open on morphemes")
+    mg = page.locator("#fams .fgroup")
+    check(mg.count() == 2 and mg.nth(0).locator("h3").all_inner_texts()[:2] == ['-gen: "maker"', "Symbols from older names"]
+          and all(h.startswith("Naming pattern") for h in mg.nth(1).locator("h3").all_inner_texts()), "morphemes first, then naming patterns")
     origins = page.locator("#fams .origins .fname").all_inner_texts()
     check(sorted(origins) == sorted(v[1] for v in EL.values()), "Where each name comes from must list all 42 names once")
     check(page.locator('#fams .fname:has-text("Hydrogen") b').first.inner_text() == "gen", "morpheme -gen not marked in Hydrogen")
