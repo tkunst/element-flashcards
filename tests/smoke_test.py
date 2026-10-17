@@ -361,6 +361,15 @@ def connections_spelling_blank(browser):
     check("K · Potassium · 19" in page.locator("#fdetail").inner_text(), "tapping a name should show its details")
     check(page.locator('#fdetail .sq.hit[data-z="19"]').count() == 1, "detail map should mark potassium")
 
+    # --- Letter-teams view: multi-letter teams boxed, split teams dashed ---
+    page.click('[data-spellview="graphemes"]')
+    check(page.locator("#glegend").is_visible(), "letter-teams legend should show")
+    phos = page.locator('#fams .fam:not(.f8) .fname:has-text("Phosphorus")')
+    check(phos.locator(".gr.multi").all_inner_texts() == ["Ph", "ph", "or"], "Phosphorus teams should be Ph, ph, or")
+    check(page.locator('#fams .fname:has-text("Chlorine") .gr.split').all_inner_texts() == ["i", "e"], "Chlorine should show the i_e split team")
+    check(sorted(page.locator("#fams .fam:not(.f8) .fname").all_inner_texts()) == sorted(v[1] for v in EL.values()), "letter-teams view must still spell all 42 names")
+    page.click('[data-spellview="marks"]')
+
     # --- Find the Elements on a blank board: no symbols until found ---
     page.click('[data-tab="game"]')
     page.click('[data-gboard="blank"]')
@@ -378,6 +387,33 @@ def connections_spelling_blank(browser):
     check(not errors, f"JavaScript errors: {errors}")
     ctx.close()
     print("ok  connections (element + family), spelling families, numbers-only/blank board")
+
+
+def data_checks():
+    """Static checks on the page's data: letter teams spell each name, and ladder pieces never split a team."""
+    html = (pathlib.Path(__file__).resolve().parent.parent / "index.html").read_text()
+    graph = dict(re.findall(r"(\w+): '([A-Za-z* ]+)'", html[html.index("var GRAPH = {"):html.index("function teams")]))
+    ladder = {int(z): ch for z, ch in re.findall(r"(\d+): \['([a-z ]+)',", html[html.index("var LADDER = {"):html.index("EL.forEach(function (e) {\n    var L")])}
+    check(sorted(graph) == sorted(v[1] for v in EL.values()), "letter teams must cover all 42 names")
+    check(sorted(ladder) == sorted(EL), "ladder must cover all 42 elements")
+    for z, (_, name, _) in EL.items():
+        toks = graph[name].split()
+        check("".join(t.replace("*", "") for t in toks) == name, f"letter teams don't spell {name}")
+        bad, pos, split_start = set(), 0, None
+        for t in toks:
+            letters = t.replace("*", "")
+            bad.update(range(pos + 1, pos + len(letters)))   # inside a multi-letter team
+            if t.endswith("*"):
+                split_start = pos
+            if t.startswith("*"):
+                bad.update(range(split_start + 1, pos + 1))   # between the halves of a split team
+            pos += len(letters)
+        cuts, pos = set(), 0
+        for piece in ladder[z].split()[:-1]:
+            pos += len(piece)
+            cuts.add(pos)
+        check(not (cuts & bad), f"ladder pieces for {name} split a letter team: {ladder[z]} vs {graph[name]}")
+    print("ok  data: letter teams spell all 42 names; no ladder piece splits a team")
 
 
 def blocked_storage(browser):
@@ -398,6 +434,7 @@ def blocked_storage(browser):
 
 
 def main():
+    data_checks()
     with sync_playwright() as p:
         browser = p.chromium.launch()
         try:

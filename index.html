@@ -145,6 +145,10 @@
   .fname { font: inherit; font-weight: 700; padding: 5px 10px; border: 1.5px solid rgba(0,0,0,.25); border-radius: 8px; background: rgba(255,255,255,.75); cursor: pointer; color: var(--ink); }
   .fname b { color: #b3261e; text-decoration: underline; text-decoration-thickness: 2px; }
   .fname.dim { opacity: .4; }
+  .gr { display: inline-block; }
+  .gr.multi { border: 2px solid #2c5aa0; border-radius: 5px; background: #fff; padding: 0 3px; margin: 0 1px; }
+  .gr.split { border: 2px dashed #b3261e; border-radius: 5px; padding: 0 2px; margin: 0 1px; }
+  .glegend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .9em; color: var(--soft); margin: 0 0 10px; }
   .fdetail { margin-top: 12px; }
   .f0 { background: #fdf0c8; } .f1 { background: #ffd9c2; } .f2 { background: #d6efe0; } .f3 { background: #dbe7fb; }
   .f4 { background: #eadcf6; } .f5 { background: #f6dbe6; } .f6 { background: #e8e8e8; } .f7 { background: #d9f2f2; } .f8 { background: #fff7d6; }
@@ -296,6 +300,16 @@
   <div class="panel" id="tab-spell" hidden>
     <div class="prompt">Spelling families</div>
     <p class="note" style="margin-top:0">The 42 names fall into a few families that share an ending. Learn the pattern once, then just the tricky letters (in <b style="color:#b3261e;text-decoration:underline">red</b>). Tap a name to see its symbol and where it lives. Names outside the element group you picked are faded.</p>
+    <div class="row" style="margin-top:10px">
+      <span class="lbl">Show:</span>
+      <button class="pill" type="button" data-spellview="marks">Tricky letters</button>
+      <button class="pill" type="button" data-spellview="graphemes">Letter teams</button>
+    </div>
+    <div class="glegend" id="glegend" hidden>
+      <span><span class="gr multi">ph</span> letters that team up to spell one sound</span>
+      <span><span class="gr split">i</span>n<span class="gr split">e</span> a split team: two letters apart that work together (the e makes the i say "ee" or "eye")</span>
+      <span><b>Iron</b> doesn't follow the usual sounds ("eye-ern"): learn it as a whole word</span>
+    </div>
     <div class="fams" id="fams"></div>
     <div class="fdetail" id="fdetail"></div>
   </div>
@@ -377,20 +391,20 @@
   // (decoys follow common English spelling alternatives: ph/f, c/k, -on/-an, -ium/-inum, -el/-le, doubled letters).
   var LADDER = {
     1: ['hy dro gen', 'hi', 'Hidrogen Hydrogin Hydragen'], 2: ['he li um', 'le', 'Heleum Heliem Hellium'],
-    3: ['li thi um', 'ti', 'Lithiem Lithum Lythium'], 4: ['be ryl li um', 'ril', 'Berylium Berillium Beryllum'],
+    3: ['li thi um', 'ti', 'Lithiem Lithum Lythium'], 4: ['be ryll i um', 'ril', 'Berylium Berillium Beryllum'],
     5: ['bor on', 'an', 'Boran Borron Boren'], 6: ['car bon', 'kar', 'Karbon Carbin Carban'],
     7: ['ni tro gen', 'jen', 'Nitrogin Nitragen Nitrojen'], 8: ['ox y gen', 'i', 'Oxigen Oxogen Oxygin'],
-    9: ['flu or ine', 'een', 'Flourine Florine Fluorene'], 10: ['ne on', 'an', 'Nean Neeon Neone'],
+    9: ['fluor ine', 'flour', 'Flourine Florine Fluorene'], 10: ['ne on', 'an', 'Nean Neeon Neone'],
     11: ['so di um', 'de', 'Sodeum Sodiem Soduim'], 12: ['mag ne si um', 'zi', 'Magnezium Magnesuim Magnesiem'],
     13: ['a lu mi num', 'me', 'Aluminun Alumanum Aluminam'], 14: ['si li con', 'kon', 'Silikon Silicone Silican'],
     15: ['phos phor us', 'ous', 'Phosphorous Fosforus Phospherus'], 16: ['sul fur', 'fer', 'Sulfer Sulphar Sulfor'],
     17: ['chlor ine', 'clor', 'Clorine Chloreen Chlorene'], 18: ['ar gon', 'gan', 'Argan Argen Argone'],
-    19: ['po tas si um', 'shi', 'Potasium Potassuim Pottasium'], 20: ['cal ci um', 'si', 'Calsium Calcuim Kalcium'],
+    19: ['po tass i um', 'shi', 'Potasium Potassuim Pottasium'], 20: ['cal ci um', 'si', 'Calsium Calcuim Kalcium'],
     21: ['scan di um', 'skan', 'Skandium Scandeum Scanduim'], 22: ['ti ta ni um', 'te', 'Titainium Titanuim Titaneum'],
     23: ['va na di um', 'ne', 'Vanadeum Venadium Vanaduim'], 24: ['chro mi um', 'cro', 'Cromium Chromeum Chromuim'],
     25: ['man ga nese', 'nees', 'Manganeese Mangenese Manganeze'], 26: ['i ron', 'ern', 'Iorn Irun Iren'],
     27: ['co balt', 'bolt', 'Cobolt Kobalt Coballt'], 28: ['nick el', 'le', 'Nickle Nickal Nikel'],
-    29: ['cop per', 'pur', 'Coper Coppar Copar'], 30: ['z inc', 'ink', 'Zink Zync Zinck'],
+    29: ['copp er', 'ur', 'Coper Coppar Copar'], 30: ['z inc', 'ink', 'Zink Zync Zinck'],
     35: ['bro mine', 'meen', 'Bromeen Bromene Brommine'], 36: ['kryp ton', 'krip', 'Kripton Kryptin Cripton'],
     47: ['sil ver', 'vur', 'Silvur Sillver Silvar'], 50: ['t in', 'en', 'Tinn Tyn Ten'],
     53: ['i o dine', 'deen', 'Iodene Iodeen Iodyne'], 78: ['plat i num', 'ni', 'Platinium Platnum Plattinum'],
@@ -1130,20 +1144,48 @@
   var SNEAKY = 'H[y]drogen Ox[y]gen Ber[y]llium Kr[y]pton Mercur[y]';
   var NAMEZ = {}; EL.forEach(function (e) { NAMEZ[e.name] = e.z; });
   function marked(w) { return w.replace(/\[([^\]]+)\]/g, '<b>$1</b>'); }
+  // Letter teams (graphemes): the letters that spell each sound, separated by spaces.
+  // "x*" ... "*y" are the two halves of a split team (i_e, e_e).
+  var GRAPH = {
+    Hydrogen: 'H y d r o g e n', Helium: 'H e l i u m', Lithium: 'L i th i u m', Beryllium: 'B e r y ll i u m',
+    Boron: 'B or o n', Carbon: 'C ar b o n', Nitrogen: 'N i t r o g e n', Oxygen: 'O x y g e n',
+    Fluorine: 'F l uor i* n *e', Neon: 'N e o n', Sodium: 'S o d i u m', Magnesium: 'M a g n e s i u m',
+    Aluminum: 'A l u m i n u m', Silicon: 'S i l i c o n', Phosphorus: 'Ph o s ph or u s', Sulfur: 'S u l f ur',
+    Chlorine: 'Ch l or i* n *e', Argon: 'Ar g o n', Potassium: 'P o t a ss i u m', Calcium: 'C a l c i u m',
+    Scandium: 'S c a n d i u m', Titanium: 'T i t a n i u m', Vanadium: 'V a n a d i u m', Chromium: 'Ch r o m i u m',
+    Manganese: 'M a n g a n e* s *e', Iron: 'I r o n', Cobalt: 'C o b a l t', Nickel: 'N i ck e l',
+    Copper: 'C o pp er', Zinc: 'Z i n c', Bromine: 'B r o m i* n *e', Krypton: 'K r y p t o n',
+    Silver: 'S i l v er', Tin: 'T i n', Iodine: 'I o d i* n *e', Platinum: 'P l a t i n u m',
+    Gold: 'G o l d', Mercury: 'M er c u r y', Lead: 'L ea d', Radon: 'R a d o n',
+    Uranium: 'U r a n i u m', Plutonium: 'P l u t o n i u m'
+  };
+  function teams(name) {
+    return GRAPH[name].split(' ').map(function (t) {
+      var split = t.indexOf('*') >= 0, letters = t.replace('*', '');
+      return '<span class="gr' + (split ? ' split' : letters.length > 1 ? ' multi' : '') + '">' + letters + '</span>';
+    }).join('');
+  }
+  function nameHTML(w) { return S.spellView === 'graphemes' ? teams(plain(w)) : marked(w); }
+  [].forEach.call(document.querySelectorAll('[data-spellview]'), function (b) {
+    b.addEventListener('click', function () { S.spellView = b.getAttribute('data-spellview'); save(); renderFams(); });
+  });
   function plain(w) { return w.replace(/[\[\]]/g, ''); }
   function renderFams() {
+    var view = S.spellView === 'graphemes' ? 'graphemes' : 'marks';
+    [].forEach.call(document.querySelectorAll('[data-spellview]'), function (b) { b.classList.toggle('on', b.getAttribute('data-spellview') === view); });
+    document.getElementById('glegend').hidden = view !== 'graphemes';
     var inSet = {}; SETS[S.set].forEach(function (e) { inSet[e.z] = 1; });
     var html = SPELL.map(function (f, i) {
       return '<div class="fam f' + i + '"><h3>' + f[0] + '</h3><p class="tip">' + f[1] + '</p><div class="names">' +
         f[2].split(' ').map(function (w) {
           var z = NAMEZ[plain(w)];
-          return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + marked(w) + '</button>';
+          return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
         }).join('') + '</div></div>';
     }).join('');
     html += '<div class="fam f8"><h3>sneaky y</h3><p class="tip">These five spell a sound with <b>y</b> where most words would use i.</p><div class="names">' +
       SNEAKY.split(' ').map(function (w) {
         var z = NAMEZ[plain(w)];
-        return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + marked(w) + '</button>';
+        return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
       }).join('') + '</div></div>';
     document.getElementById('fams').innerHTML = html;
     document.getElementById('fdetail').innerHTML = '';
