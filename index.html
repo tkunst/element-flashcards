@@ -160,6 +160,8 @@
   .lat { color: #0b6e99; font-weight: 800; margin-left: 4px; }
   .olist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 14px; }
   .orow { display: flex; align-items: center; gap: 8px; font-size: .92em; }
+  .opart { display: block; }
+  .opart.wsum { white-space: nowrap; }
   .orow .fname { min-width: 7.5em; text-align: left; }
   .fam.origins { grid-column: 1 / -1; }
   .glegend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .9em; color: var(--soft); margin: 0 0 10px; }
@@ -1239,21 +1241,27 @@
     Hydrogen: 'hydro + gen → hydrogen; hydro + gen = water + maker', Helium: 'helios (Greek) = sun', Lithium: 'lithos (Greek) = stone',
     Beryllium: 'beryl, a gemstone', Boron: 'borax, a mineral', Carbon: 'carbo (Latin) = coal',
     Nitrogen: 'nitro + gen → nitrogen; nitro + gen = niter (a salt) + maker', Oxygen: 'oxy + gen → oxygen; oxy + gen = acid + maker',
-    Fluorine: 'fluere (Latin) = to flow, from the mineral fluorite. Same flu- as fluid, fluent and fluorescent',
+    Fluorine: 'fluere (Latin) = to flow; from the mineral fluorite; same flu- as fluid, fluent, fluorescent',
     Neon: 'neos (Greek) = new', Sodium: 'soda; symbol Na from natrium (Latin)', Magnesium: 'Magnesia, a region of Greece',
     Aluminum: 'alum, a salt', Silicon: 'silex (Latin) = flint', Phosphorus: 'phos + phor + us → phosphorus (Greek); phos + phor = light + bearer',
-    Sulfur: 'sulfur (Latin)', Chlorine: 'chloros (Greek) = pale green', Argon: 'argos (Greek) = idle, lazy: it barely reacts',
+    Sulfur: 'sulfur (Latin)', Chlorine: 'chloros (Greek) = pale green', Argon: 'argos (Greek) = idle, lazy; it barely reacts',
     Potassium: 'potash ("pot ash"); symbol K from kalium (Latin)', Calcium: 'calx (Latin) = lime', Scandium: 'Scandinavia',
     Titanium: 'the Titans of Greek myth', Vanadium: 'Vanadís, a Norse goddess', Chromium: 'chroma (Greek) = color',
     Manganese: 'magnes, also from Magnesia', Iron: 'iren (Old English); symbol Fe from ferrum (Latin)', Cobalt: 'kobold (German) = a goblin in folk tales',
     Nickel: 'Kupfernickel (German) = "copper demon"', Copper: 'Cyprus; symbol Cu from cuprum (Latin)', Zinc: 'Zink (German)',
     Bromine: 'bromos (Greek) = stench', Krypton: 'kryptos (Greek) = hidden', Silver: 'seolfor (Old English); symbol Ag from argentum (Latin)',
     Tin: 'tin (Old English); symbol Sn from stannum (Latin)', Iodine: 'iodes (Greek) = violet', Platinum: 'platina (Spanish) = little silver',
-    Gold: 'gold (Old English); symbol Au from aurum (Latin)', Mercury: 'the planet Mercury; symbol Hg from hydrargyrum (Latin) = water-silver', Lead: 'lēad (Old English); symbol Pb from plumbum (Latin), like plumbing',
+    Gold: 'gold (Old English); symbol Au from aurum (Latin)', Mercury: 'the planet Mercury; symbol Hg from hydrargyrum (Latin); hydr + argyrum = water + silver', Lead: 'lēad (Old English); symbol Pb from plumbum (Latin); plumbum → plumbing (old pipes were lead)',
     Radon: 'radium + on → radon', Uranium: 'the planet Uranus', Plutonium: 'the dwarf planet Pluto'
   };
   // Symbols that come from a Latin name (shown as: Sodium  Na = natrium)
   var LATIN = { Sodium: 'natrium', Potassium: 'kalium', Iron: 'ferrum', Copper: 'cuprum', Silver: 'argentum', Tin: 'stannum', Gold: 'aurum', Mercury: 'hydrargyrum', Lead: 'plumbum' };
+  // Each part of an origin on its own line; a word sum (has a +) never breaks inside (style guide Rules 1 and 8).
+  function originHTML(name) {
+    return ORIGIN[name].split('; ').map(function (part) {
+      return '<span class="opart' + (part.indexOf(' + ') >= 0 ? ' wsum' : '') + '">' + part + '</span>';
+    }).join('');
+  }
   var NAMEZ = {}; EL.forEach(function (e) { NAMEZ[e.name] = e.z; });
   // Graphemes: the letters that spell each sound, separated by spaces (EBLI style: consonant + e is one grapheme, like ne, se).
   var GRAPH = {
@@ -1331,7 +1339,7 @@
     }
     if (view === 'morph') {
       html += '<div class="fam f8 origins"><h3>Where each name comes from</h3><p class="tip">The meaning part of every name. Tap a name to hear it and see it on the table.</p><div class="olist">' +
-        EL.map(function (e) { return '<div class="orow">' + btn(e.name, e.name) + '<span>' + ORIGIN[e.name] + '</span></div>'; }).join('') + '</div></div>';
+        EL.map(function (e) { return '<div class="orow">' + btn(e.name, e.name) + '<span>' + originHTML(e.name) + '</span></div>'; }).join('') + '</div></div>';
     }
     document.getElementById('fams').innerHTML = html;
     document.getElementById('fdetail').innerHTML = '';
@@ -1342,7 +1350,7 @@
         d.innerHTML = '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + playBtn(e) + '</div>' +
           '<div class="say">Sounds like <b>' + SAY[e.name][1] + '</b> · <span class="ipa">/' + SAY[e.name][0] + '/</span></div>' +
           '<div class="say">Graphemes: ' + teams(e.name) + '</div>' +
-          '<div class="say">Meaning: ' + ORIGIN[e.name] + '</div>' +
+          '<div class="say">Meaning: ' + originHTML(e.name) + '</div>' +
           '<div><b>' + CATNAME[e.cat] + '</b> · ' + e.fam + '</div>' + (e.hook ? '<div class="hook">' + e.hook + '</div>' : '') +
           '<div class="board mini" id="famMini"></div></div>';
         buildBoard(document.getElementById('famMini'), { mini: true })[e.z].classList.add('hit');

@@ -421,6 +421,8 @@ def connections_spelling_blank(browser):
     check(mg.count() == 2 and mg.nth(0).locator("h3").all_inner_texts()[:2] == ['-gen: "maker"', "Symbols from older names"]
           and all(h.startswith("Naming pattern") for h in mg.nth(1).locator("h3").all_inner_texts()), "morphemes first, then naming patterns")
     origins = page.locator("#fams .origins .fname").all_inner_texts()
+    hy = page.locator('#fams .origins .orow:has-text("hydro + gen") .wsum')
+    check(hy.count() == 2 and all(b["height"] < 30 for b in [hy.nth(i).bounding_box() for i in range(2)]), "each hydrogen word sum should sit on one line")
     check(sorted(origins) == sorted(v[1] for v in EL.values()), "Where each name comes from must list all 42 names once")
     check(page.locator('#fams .fname:has-text("Hydrogen") b').first.inner_text() == "gen", "morpheme -gen not marked in Hydrogen")
     check("hydro + gen → hydrogen" in page.locator("#fams").inner_text() and "hydro + gen = water + maker" in page.locator("#fams").inner_text(), "word sum and meaning sum for hydrogen")
