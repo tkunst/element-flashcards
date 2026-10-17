@@ -362,6 +362,7 @@ def connections_spelling_blank(browser):
     check(page.locator('#fams .fname:has-text("Beryllium") b').first.inner_text() == "ll", "tricky letters not marked")
     page.click('#fams .fname:has-text("Potassium")')
     check("K · Potassium · 19" in page.locator("#fdetail").inner_text(), "tapping a name should show its details")
+    check("puh-TASS-ee-um" in page.locator("#fdetail").inner_text() and "/pəˈtæsiəm/" in page.locator("#fdetail").inner_text(), "details should show how it sounds")
     check(page.locator('#fdetail .sq.hit[data-z="19"]').count() == 1, "detail map should mark potassium")
 
     # --- Letter-teams view: multi-letter teams boxed, split teams dashed ---
@@ -416,7 +417,15 @@ def data_checks():
             pos += len(piece)
             cuts.add(pos)
         check(not (cuts & bad), f"ladder pieces for {name} split a letter team: {ladder[z]} vs {graph[name]}")
-    print("ok  data: letter teams spell all 42 names; no ladder piece splits a team")
+    # Pronunciations (IPA, checked against the CMU Pronouncing Dictionary when written) back the tips' sound claims.
+    say = dict(re.findall(r"(\w+): \['([^']+)', '[^']+'\]", html[html.index("var SAY = {"):html.index("function teams")]))
+    check(sorted(say) == sorted(v[1] for v in EL.values()), "every name needs a pronunciation")
+    tip = re.search(r"\['-on', '([^']+)'", html).group(1)
+    for n in ("Boron", "Neon", "Argon", "Krypton", "Radon"):
+        check(n in tip.split('"ahn"')[1].split('"un"')[0] and say[n].endswith("ɑn"), f"-on tip: {n} should be listed as and sound like 'ahn'")
+    for n in ("Carbon", "Silicon"):
+        check(n in tip.split('"un"')[1] and say[n].endswith("ən"), f"-on tip: {n} should be listed as and sound like 'un'")
+    print("ok  data: letter teams spell all 42 names; no ladder piece splits a team; -on sound claims match the IPA")
 
 
 def blocked_storage(browser):

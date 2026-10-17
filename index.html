@@ -150,6 +150,7 @@
   .gr.split { border: 2px dashed #b3261e; border-radius: 5px; padding: 0 2px; margin: 0 1px; }
   .glegend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .9em; color: var(--soft); margin: 0 0 10px; }
   .fdetail { margin-top: 12px; }
+  .say { margin: 2px 0 4px; } .ipa { font-family: 'Charis SIL', 'Doulos SIL', 'Gentium Plus', 'Times New Roman', serif; font-size: 1.1em; }
   .f0 { background: #fdf0c8; } .f1 { background: #ffd9c2; } .f2 { background: #d6efe0; } .f3 { background: #dbe7fb; }
   .f4 { background: #eadcf6; } .f5 { background: #f6dbe6; } .f6 { background: #e8e8e8; } .f7 { background: #d9f2f2; } .f8 { background: #fff7d6; }
   .tm { margin: 18px 0 0; font-size: .8em; color: #6a7383; }
@@ -1135,7 +1136,7 @@
       'Helium Lithium Bery[ll]ium Sodium Magnesium Pota[ss]ium Calcium Scandium Titanium Vanadium [Ch]romium Uranium Plutonium'],
     ['-inum', 'These two break the -ium pattern: <b>no i before the um</b>.', 'Alumi[num] Plati[num]'],
     ['-ine', 'All four are <b>halogens</b>. Fluorine has <b>uo</b> (not "flour"); Chlorine starts with <b>ch</b>.', 'Fl[uo]rine [Ch]lorine Bromine Iodine'],
-    ['-on', 'The ending sounds like "un" but is spelled <b>-on</b>. Iron is said "eye-ern" but spelled i-r-o-n.', 'Boron Carbon Neon Silicon Argon Kr[y]pton Radon [Iron]'],
+    ['-on', 'All spelled <b>-on</b>, but it sounds two ways: "ahn" in Boron, Neon, Argon, Krypton and Radon, and a quick "un" in Carbon and Silicon. Iron is said "eye-ern" but spelled i-r-o-n.', 'Boron Carbon Neon Silicon Argon Kr[y]pton Radon [Iron]'],
     ['-gen', '<b>-gen</b> means "maker": hydrogen = water-maker, oxygen = acid-maker, nitrogen = maker of niter. Two have a <b>y</b>.', 'H[y]drogen Nitrogen Ox[y]gen'],
     ['-er / -ur', 'Copper and Silver end <b>-er</b>. Sulfur ends <b>-ur</b>, with a u in both halves.', 'Copp[er] Silv[er] Sulf[ur]'],
     ['short and old', 'Short names, used for thousands of years. Zinc ends in <b>c</b>, not k. Lead is spelled like "lead the way" but said "led".', 'Tin Zin[c] Gold L[ea]d'],
@@ -1158,6 +1159,23 @@
     Silver: 'S i l v er', Tin: 'T i n', Iodine: 'I o d i* n *e', Platinum: 'P l a t i n u m',
     Gold: 'G o l d', Mercury: 'M er c u r y', Lead: 'L ea d', Radon: 'R a d o n',
     Uranium: 'U r a n i u m', Plutonium: 'P l u t o n i u m'
+  };
+  // How each name sounds (American English; IPA checked against the CMU Pronouncing Dictionary) + an easy respelling.
+  var SAY = {
+    Hydrogen: ['ˈhaɪdrədʒən', 'HY-druh-jun'], Helium: ['ˈhiliəm', 'HEE-lee-um'], Lithium: ['ˈlɪθiəm', 'LITH-ee-um'],
+    Beryllium: ['bəˈrɪliəm', 'buh-RIL-ee-um'], Boron: ['ˈbɔrɑn', 'BOR-ahn'], Carbon: ['ˈkɑrbən', 'KAR-bun'],
+    Nitrogen: ['ˈnaɪtrədʒən', 'NY-truh-jun'], Oxygen: ['ˈɑksədʒən', 'AHK-suh-jun'], Fluorine: ['ˈflʊrin', 'FLOOR-een'],
+    Neon: ['ˈniɑn', 'NEE-ahn'], Sodium: ['ˈsoʊdiəm', 'SOH-dee-um'], Magnesium: ['mæɡˈniziəm', 'mag-NEE-zee-um'],
+    Aluminum: ['əˈlumənəm', 'uh-LOO-mih-num'], Silicon: ['ˈsɪləkən', 'SIL-ih-kun'], Phosphorus: ['ˈfɑsfərəs', 'FAHS-fuh-rus'],
+    Sulfur: ['ˈsʌlfər', 'SUL-fur'], Chlorine: ['ˈklɔrin', 'KLOR-een'], Argon: ['ˈɑrɡɑn', 'AR-gahn'],
+    Potassium: ['pəˈtæsiəm', 'puh-TASS-ee-um'], Calcium: ['ˈkælsiəm', 'KAL-see-um'], Scandium: ['ˈskændiəm', 'SKAN-dee-um'],
+    Titanium: ['taɪˈteɪniəm', 'ty-TAY-nee-um'], Vanadium: ['vəˈneɪdiəm', 'vuh-NAY-dee-um'], Chromium: ['ˈkroʊmiəm', 'KROH-mee-um'],
+    Manganese: ['ˈmæŋɡəniz', 'MANG-guh-neez'], Iron: ['ˈaɪərn', 'EYE-ern'], Cobalt: ['ˈkoʊbɔlt', 'KOH-bawlt'],
+    Nickel: ['ˈnɪkəl', 'NIK-ul'], Copper: ['ˈkɑpər', 'KAH-pur'], Zinc: ['zɪŋk', 'ZINK'],
+    Bromine: ['ˈbroʊmin', 'BROH-meen'], Krypton: ['ˈkrɪptɑn', 'KRIP-tahn'], Silver: ['ˈsɪlvər', 'SIL-vur'],
+    Tin: ['tɪn', 'TIN'], Iodine: ['ˈaɪədaɪn', 'EYE-uh-dyne'], Platinum: ['ˈplætənəm', 'PLAT-uh-num'],
+    Gold: ['ɡoʊld', 'GOHLD'], Mercury: ['ˈmɜrkjəri', 'MUR-kyuh-ree'], Lead: ['lɛd', 'LED'],
+    Radon: ['ˈreɪdɑn', 'RAY-dahn'], Uranium: ['jʊˈreɪniəm', 'yoo-RAY-nee-um'], Plutonium: ['pluˈtoʊniəm', 'ploo-TOH-nee-um']
   };
   function teams(name) {
     return GRAPH[name].split(' ').map(function (t) {
@@ -1182,7 +1200,7 @@
           return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
         }).join('') + '</div></div>';
     }).join('');
-    html += '<div class="fam f8"><h3>sneaky y</h3><p class="tip">These five spell a sound with <b>y</b> where most words would use i.</p><div class="names">' +
+    html += '<div class="fam f8"><h3>sneaky y</h3><p class="tip">In all five, <b>y</b> spells a vowel sound: "eye" in Hydrogen, short i in Beryllium and Krypton, a quick "uh" in Oxygen, and "ee" at the end of Mercury (like happy).</p><div class="names">' +
       SNEAKY.split(' ').map(function (w) {
         var z = NAMEZ[plain(w)];
         return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + nameHTML(w) + '</button>';
@@ -1194,6 +1212,7 @@
         var e = BYZ[+b.getAttribute('data-z')];
         var d = document.getElementById('fdetail');
         d.innerHTML = '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + '</div>' +
+          '<div class="say">Sounds like <b>' + SAY[e.name][1] + '</b> · <span class="ipa">/' + SAY[e.name][0] + '/</span></div>' +
           '<div><b>' + CATNAME[e.cat] + '</b> · ' + e.fam + '</div>' + (e.hook ? '<div class="hook">' + e.hook + '</div>' : '') +
           '<div class="board mini" id="famMini"></div></div>';
         buildBoard(document.getElementById('famMini'), { mini: true })[e.z].classList.add('hit');
