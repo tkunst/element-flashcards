@@ -1183,10 +1183,9 @@
           '[Ph]os[ph]orus [Ch]lorine [Ch]romium Li[th]ium Ni[ck]el Bery[ll]ium Pota[ss]ium Co[pp]er'],
         ['Consonant + e', 'The e joins the consonant before it to spell one sound: <b>ne</b> = /n/ (like in mane), <b>se</b> = /z/ (like in choose).',
           'Fluori[ne] Chlori[ne] Bromi[ne] Iodi[ne] Mangane[se]'],
-        ['Vowel + r', 'An r after a vowel makes one sound together: <b>ar</b> = /ɑr/ (car), <b>or</b> = /ɔr/ (for), and /ər/ in Phosphorus, <b>er</b> and <b>ur</b> = /ər/ (her, fur).',
-          'C[ar]bon [Ar]gon B[or]on Chl[or]ine Phosph[or]us Copp[er] Silv[er] M[er]cury Sulf[ur]'],
-        ['Three letters, one sound', '<b>uor</b> spells /ʊr/ in Fluorine, /ˈflʊrin/.', 'Fl[uor]ine'],
-        ['Two vowels, one sound', '<b>ea</b> spells /ɛ/ in Lead, like in bread and head.', 'L[ea]d'],
+        ['r-controlled: one sound or two?', '<b>er</b>, <b>ur</b>, and the <b>or</b> in Phosphorus each spell one sound, /ɚ/ (or /ɝ/ when it is stressed, as in Mercury), so IPA writes it with one symbol. In Carbon, Argon, Boron and Chlorine the vowel and the r are two sounds, so IPA uses two symbols: /ɑr/ is /ɑ/ + /r/, and /ɔr/ is /ɔ/ + /r/.',
+          'Copp[er] Silv[er] M[er]cury Sulf[ur] Phosph[or]us'],
+        ['Two vowels, one sound', '<b>ea</b> spells /ɛ/ in Lead, like in bread and head. <b>uo</b> spells /ʊ/ in Fluorine, /ˈflʊrin/.', 'L[ea]d Fl[uo]rine'],
         ['All 42 names in graphemes', 'Each box or single letter is one sound.', '*all']
       ]
     },
@@ -1200,13 +1199,13 @@
         ['Same Sound, Different Spelling: /ɪ/', '<b>i</b> or <b>y</b>.', 'L[i]thium T[i]n Z[i]nc S[i]lver N[i]ckel Kr[y]pton Ber[y]llium'],
         ['Same Sound, Different Spelling: /aɪ/', '<b>i</b> or <b>y</b>.', '[I]ron [I]odine T[i]tanium N[i]trogen H[y]drogen'],
         ['Same Sound, Different Spelling: /i/', '<b>e</b>, <b>i</b>, or <b>y</b>.', 'H[e]lium Mangan[e]se Chlor[i]ne Brom[i]ne Sod[i]um Mercur[y]'],
-        ['Same Sound, Different Spelling: /ər/', '<b>er</b>, <b>ur</b>, or <b>or</b>.', 'Copp[er] Silv[er] M[er]cury Sulf[ur] Phosph[or]us'],
+        ['Same Sound, Different Spelling: /ɚ/', '<b>er</b>, <b>ur</b>, or <b>or</b>. One sound, one IPA symbol. (In Mercury the er is stressed, written /ɝ/.)', 'Copp[er] Silv[er] M[er]cury Sulf[ur] Phosph[or]us'],
         ['Same Spelling, Different Sound: c', '<b>c</b> says /s/ before i or e, and /k/ before a, o, u, or another consonant. Calcium has both.', '[C]arbon Sili[c]on Cal[c]ium'],
         ['Same Spelling, Different Sound: g', '<b>g</b> says /dʒ/ before e in these names (Hydrogen) and /ɡ/ before other letters (Gold).', 'Hydro[g]en Nitro[g]en Oxy[g]en [G]old Ar[g]on Ma[g]nesium'],
         ['Same Spelling, Different Sound: s', '<b>s</b> says /s/ in Sodium and /z/ in Magnesium.', '[S]odium [S]ilicon Magne[s]ium'],
         ['Same Spelling, Different Sound: y', '<b>y</b> says /aɪ/ in Hydrogen, /ɪ/ in Krypton and Beryllium, /ə/ in Oxygen, and /i/ at the end of Mercury.', 'H[y]drogen Kr[y]pton Ber[y]llium Ox[y]gen Mercur[y]'],
         ['Same Spelling, Different Sound: i', '<b>i</b> says /ɪ/ in Lithium, /aɪ/ in Iron, and /i/ in Chlorine.', 'L[i]thium [I]ron Chlor[i]ne'],
-        ['Same Spelling, Different Sound: -on', 'All spelled <b>-on</b>, and it sounds two ways: /ɑn/ in Boron, Neon, Argon, Krypton and Radon, and /ən/ in Carbon and Silicon. In Iron, i says /aɪ/ and ron says /ərn/: /ˈaɪərn/.',
+        ['Same Spelling, Different Sound: -on', 'All spelled <b>-on</b>, and it sounds two ways: /ɑn/ in Boron, Neon, Argon, Krypton and Radon, and /ən/ in Carbon and Silicon. In Iron, i says /aɪ/ and ron says /ɚn/: /ˈaɪɚn/.',
           'Bor[on] Ne[on] Arg[on] Krypt[on] Rad[on] Carb[on] Silic[on] Ir[on]']
       ]
     }
@@ -1232,10 +1231,10 @@
   // Graphemes: the letters that spell each sound, separated by spaces (EBLI style: consonant + e is one grapheme, like ne, se).
   var GRAPH = {
     Hydrogen: 'H y d r o g e n', Helium: 'H e l i u m', Lithium: 'L i th i u m', Beryllium: 'B e r y ll i u m',
-    Boron: 'B or o n', Carbon: 'C ar b o n', Nitrogen: 'N i t r o g e n', Oxygen: 'O x y g e n',
-    Fluorine: 'F l uor i ne', Neon: 'N e o n', Sodium: 'S o d i u m', Magnesium: 'M a g n e s i u m',
+    Boron: 'B o r o n', Carbon: 'C a r b o n', Nitrogen: 'N i t r o g e n', Oxygen: 'O x y g e n',
+    Fluorine: 'F l uo r i ne', Neon: 'N e o n', Sodium: 'S o d i u m', Magnesium: 'M a g n e s i u m',
     Aluminum: 'A l u m i n u m', Silicon: 'S i l i c o n', Phosphorus: 'Ph o s ph or u s', Sulfur: 'S u l f ur',
-    Chlorine: 'Ch l or i ne', Argon: 'Ar g o n', Potassium: 'P o t a ss i u m', Calcium: 'C a l c i u m',
+    Chlorine: 'Ch l o r i ne', Argon: 'A r g o n', Potassium: 'P o t a ss i u m', Calcium: 'C a l c i u m',
     Scandium: 'S c a n d i u m', Titanium: 'T i t a n i u m', Vanadium: 'V a n a d i u m', Chromium: 'Ch r o m i u m',
     Manganese: 'M a n g a n e se', Iron: 'I r o n', Cobalt: 'C o b a l t', Nickel: 'N i ck e l',
     Copper: 'C o pp er', Zinc: 'Z i n c', Bromine: 'B r o m i ne', Krypton: 'K r y p t o n',
@@ -1249,15 +1248,15 @@
     Beryllium: ['bəˈrɪliəm', 'buh-RIL-ee-um'], Boron: ['ˈbɔrɑn', 'BOR-ahn'], Carbon: ['ˈkɑrbən', 'KAR-bun'],
     Nitrogen: ['ˈnaɪtrədʒən', 'NY-truh-jun'], Oxygen: ['ˈɑksədʒən', 'AHK-suh-jun'], Fluorine: ['ˈflʊrin', 'FLOOR-een'],
     Neon: ['ˈniɑn', 'NEE-ahn'], Sodium: ['ˈsoʊdiəm', 'SOH-dee-um'], Magnesium: ['mæɡˈniziəm', 'mag-NEE-zee-um'],
-    Aluminum: ['əˈlumənəm', 'uh-LOO-mih-num'], Silicon: ['ˈsɪləkən', 'SIL-ih-kun'], Phosphorus: ['ˈfɑsfərəs', 'FAHS-fuh-rus'],
-    Sulfur: ['ˈsʌlfər', 'SUL-fur'], Chlorine: ['ˈklɔrin', 'KLOR-een'], Argon: ['ˈɑrɡɑn', 'AR-gahn'],
+    Aluminum: ['əˈlumənəm', 'uh-LOO-mih-num'], Silicon: ['ˈsɪləkən', 'SIL-ih-kun'], Phosphorus: ['ˈfɑsfɚəs', 'FAHS-fuh-rus'],
+    Sulfur: ['ˈsʌlfɚ', 'SUL-fur'], Chlorine: ['ˈklɔrin', 'KLOR-een'], Argon: ['ˈɑrɡɑn', 'AR-gahn'],
     Potassium: ['poʊˈtæsiəm', 'poh-TASS-ee-um'], Calcium: ['ˈkælsiəm', 'KAL-see-um'], Scandium: ['ˈskændiəm', 'SKAN-dee-um'],
     Titanium: ['taɪˈteɪniəm', 'ty-TAY-nee-um'], Vanadium: ['vəˈneɪdiəm', 'vuh-NAY-dee-um'], Chromium: ['ˈkroʊmiəm', 'KROH-mee-um'],
-    Manganese: ['ˈmæŋɡəniz', 'MANG-guh-neez'], Iron: ['ˈaɪərn', 'EYE-ern'], Cobalt: ['ˈkoʊbɔlt', 'KOH-bawlt'],
-    Nickel: ['ˈnɪkəl', 'NIK-ul'], Copper: ['ˈkɑpər', 'KAH-pur'], Zinc: ['zɪŋk', 'ZINK'],
-    Bromine: ['ˈbroʊmin', 'BROH-meen'], Krypton: ['ˈkrɪptɑn', 'KRIP-tahn'], Silver: ['ˈsɪlvər', 'SIL-vur'],
+    Manganese: ['ˈmæŋɡəniz', 'MANG-guh-neez'], Iron: ['ˈaɪɚn', 'EYE-ern'], Cobalt: ['ˈkoʊbɔlt', 'KOH-bawlt'],
+    Nickel: ['ˈnɪkəl', 'NIK-ul'], Copper: ['ˈkɑpɚ', 'KAH-pur'], Zinc: ['zɪŋk', 'ZINK'],
+    Bromine: ['ˈbroʊmin', 'BROH-meen'], Krypton: ['ˈkrɪptɑn', 'KRIP-tahn'], Silver: ['ˈsɪlvɚ', 'SIL-vur'],
     Tin: ['tɪn', 'TIN'], Iodine: ['ˈaɪədaɪn', 'EYE-uh-dyne'], Platinum: ['ˈplætənəm', 'PLAT-uh-num'],
-    Gold: ['ɡoʊld', 'GOHLD'], Mercury: ['ˈmɜrkjəri', 'MUR-kyuh-ree'], Lead: ['lɛd', 'LED'],
+    Gold: ['ɡoʊld', 'GOHLD'], Mercury: ['ˈmɝkjɚi', 'MUR-kyuh-ree'], Lead: ['lɛd', 'LED'],
     Radon: ['ˈreɪdɑn', 'RAY-dahn'], Uranium: ['jʊˈreɪniəm', 'yoo-RAY-nee-um'], Plutonium: ['pluˈtoʊniəm', 'ploo-TOH-nee-um']
   };
   function teams(name) {

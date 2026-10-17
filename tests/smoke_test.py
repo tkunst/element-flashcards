@@ -401,7 +401,7 @@ def connections_spelling_blank(browser):
     allg = page.locator("#fams .allg .fname")
     check(sorted(allg.all_inner_texts()) == sorted(v[1] for v in EL.values()), "all-42 grapheme card must spell all 42 names")
     check(page.locator('#fams .allg .fname:has-text("Phosphorus") .gr.multi').all_inner_texts() == ["Ph", "ph", "or"], "Phosphorus graphemes should be Ph, ph, or")
-    check(page.locator('#fams .allg .fname:has-text("Chlorine") .gr.multi').all_inner_texts() == ["Ch", "or", "ne"], "Chlorine should end in the ne grapheme")
+    check(page.locator('#fams .allg .fname:has-text("Chlorine") .gr.multi').all_inner_texts() == ["Ch", "ne"], "Chlorine: ch and ne are graphemes; o + r are two sounds (/ɔr/)")
     check("_" not in page.locator("#tab-spell").inner_text(), "no underscore notation")
     # Phonemes: one sound/many spellings and one spelling/many sounds
     page.click('[data-spellview="phon"]')
@@ -488,11 +488,11 @@ def data_checks():
     check(all(c[0].startswith(("Same Sound, Different Spelling: ", "Same Spelling, Different Sound: ")) for c in cards), "phoneme cards must be titled Same Sound, Different Spelling / Same Spelling, Different Sound")
     check(sum(c[0].startswith("Same Sound") for c in cards) == 8, "expected 8 Same Sound, Different Spelling cards")
     def has(name, sound):
-        ipa = say[name].replace("ˈ", "").replace("ɜr", "ər")
+        ipa = say[name].replace("ˈ", "").replace("ɝ", "ɚ")  # stressed /ɝ/ and unstressed /ɚ/ are the same r-colored vowel
         if sound == "ɪ":  # short i on its own, not the second half of /aɪ/, /eɪ/, /ɔɪ/
             ipa = ipa.replace("aɪ", "").replace("eɪ", "").replace("ɔɪ", "")
         return sound in ipa
-    one_sound = {"/k/": "k", "/f/": "f", "/s/": "s", "/z/": "z", "/ɪ/": "ɪ", "/aɪ/": "aɪ", "/i/": "i", "/ər/": "ər"}
+    one_sound = {"/k/": "k", "/f/": "f", "/s/": "s", "/z/": "z", "/ɪ/": "ɪ", "/aɪ/": "aɪ", "/i/": "i", "/ɚ/": "ɚ"}
     for title, items in cards:
         key = title.split(": ")[-1] if title.startswith("Same Sound, Different Spelling") else None
         if key in one_sound:
@@ -502,7 +502,7 @@ def data_checks():
     stated = {  # one spelling, more than one sound: the sound each name is said to have
         "Carbon": "k", "Silicon": "k", "Calcium": "ls",
         "Hydrogen": "dʒ", "Nitrogen": "dʒ", "Oxygen": "dʒ", "Gold": "ɡ", "Argon": "ɡ", "Magnesium": "z",
-        "Sodium": "s", "Krypton": "ɪp", "Beryllium": "rɪ", "Mercury": "ri", "Lithium": "lɪ", "Iron": "aɪ", "Chlorine": "rin",
+        "Sodium": "s", "Krypton": "ɪp", "Beryllium": "rɪ", "Mercury": "ɚi", "Lithium": "lɪ", "Iron": "aɪ", "Chlorine": "rin",
     }
     for n, snd in stated.items():
         check(has(n, snd), f"sound claim: {n} /{say[n]}/ should contain {snd}")
