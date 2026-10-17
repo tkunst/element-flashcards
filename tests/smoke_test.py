@@ -307,6 +307,79 @@ def sort(browser):
     print("ok  sort: tap-place, drag, check, send back, perfect -> staircase rule")
 
 
+def connections_spelling_blank(browser):
+    ctx = browser.new_context(viewport={"width": 1366, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(PAGE)
+
+    # --- Connections, same element: 16 tiles; one group = symbol + name + number + map of one element ---
+    page.click('[data-tab="cx"]')
+    check(page.locator("#cxGrid .cx").count() == 16, "connections should start with 16 tiles")
+    for kind in ("sym", "nm", "num", "map"):
+        check(page.locator(f"#cxGrid .cx.{kind}").count() == 4, f"expected 4 {kind} tiles")
+    # tiles agree with the answer key: each group's symbol, name and number belong to one element
+    for g in range(4):
+        texts = {k: page.locator(f'#cxGrid .cx.{k}[data-g="{g}"]').inner_text() for k in ("sym", "nm", "num")}
+        z = BY_SYM[texts["sym"]][0]
+        check(EL[z][1] == texts["nm"] and texts["num"] == f"#{z}", f"group {g} tiles disagree: {texts}")
+        mz = page.locator(f'#cxGrid .cx.map[data-g="{g}"] .sq.hit').get_attribute("data-z")
+        check(int(mz) == z, f"group {g} map marks the wrong square")
+
+    def pick(gs):
+        for g in gs:
+            i = page.locator(f'#cxGrid .cx[data-g="{g}"]:not(.sel)').first
+            i.click()
+        page.click("#cxSubmit")
+
+    pick([0, 0, 0, 1])
+    check(page.locator("#cxMsg").inner_text() == "One away!", "3 of a group should say one away")
+    page.click("#cxClear")
+    pick([0, 0, 1, 1])
+    check(page.locator("#cxMsg").inner_text().startswith("Not a group"), "2+2 should not be a group")
+    page.click("#cxClear")
+    for g in range(4):
+        pick([g] * 4)
+    check(page.locator("#cxSolved .cx-solved").count() == 4, "all 4 groups should be solved")
+    check(page.locator("#cxMsg").inner_text().startswith("Solved! 2 mistakes"), f"solved message: {page.locator('#cxMsg').inner_text()}")
+
+    # --- Connections, same family ---
+    page.click('[data-cxmode="fam"]')
+    check(page.locator("#cxGrid .cx").count() == 16, "family puzzle should have 16 tiles")
+    for g in range(4):
+        pick([g] * 4)
+    labels = page.locator("#cxSolved .lab").all_inner_texts()
+    check(any("HALOGENS" in l.upper() for l in labels) and any("NOBLE" in l.upper() for l in labels), f"family labels: {labels}")
+
+    # --- Spelling families: every one of the 42 names exactly once (plus the sneaky-y strip) ---
+    page.click('[data-tab="spell"]')
+    fam_names = page.locator("#fams .fam:not(.f8) .fname").all_inner_texts()
+    check(sorted(fam_names) == sorted(v[1] for v in EL.values()), "spelling families must list each of the 42 names once")
+    check(page.locator('#fams .fname:has-text("Beryllium") b').first.inner_text() == "ll", "tricky letters not marked")
+    page.click('#fams .fname:has-text("Potassium")')
+    check("K · Potassium · 19" in page.locator("#fdetail").inner_text(), "tapping a name should show its details")
+    check(page.locator('#fdetail .sq.hit[data-z="19"]').count() == 1, "detail map should mark potassium")
+
+    # --- Find the Elements on a blank board: no symbols until found ---
+    page.click('[data-tab="game"]')
+    page.click('[data-gboard="blank"]')
+    check(page.locator('#gBoard [data-z="26"]').inner_text().strip() == "", "blank board should show nothing in squares")
+    page.click('[data-gboard="num"]')
+    check(page.locator('#gBoard [data-z="26"]').inner_text().strip() == "26", "numbers-only board should show just the number")
+    page.uncheck("#gEasy")
+    page.click("#gStart")
+    name = re.sub(r"^Find:\s*", "", page.locator("#gPrompt").inner_text()).strip()
+    z = BY_NAME[name][0]
+    page.click(f'#gBoard [data-z="{z}"]')
+    check(EL[z][0] in page.locator(f'#gBoard [data-z="{z}"]').inner_text(), "a found square should show its symbol")
+    check(page.locator("#gStatus").inner_text().startswith("1 of 15 found"), "numbers-only board: tap not counted")
+
+    check(not errors, f"JavaScript errors: {errors}")
+    ctx.close()
+    print("ok  connections (element + family), spelling families, numbers-only/blank board")
+
+
 def blocked_storage(browser):
     ctx = browser.new_context()
     ctx.add_init_script("""Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } });""")
@@ -332,6 +405,7 @@ def main():
                 run(browser, label, vp)
             ladder(browser)
             sort(browser)
+            connections_spelling_blank(browser)
             blocked_storage(browser)
         finally:
             browser.close()

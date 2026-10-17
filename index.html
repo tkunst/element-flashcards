@@ -125,11 +125,35 @@
   .sq.placed { visibility: hidden; }
   .sq.pick, .chip.pick { outline: 3px solid #f0a500; }
   .ghost { position: fixed; pointer-events: none; z-index: 10; font-weight: 800; padding: 6px 10px; border: 2px solid var(--orange); border-radius: 6px; background: #fff; transform: translate(-50%, -50%); }
+  .cx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cx { font: inherit; min-height: 84px; border: 2px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; font-weight: 800; overflow-wrap: anywhere; }
+  .cx.sym { font-size: 1.9em; } .cx.nm { font-size: 1em; } .cx.num { font-size: 1.3em; color: #555; }
+  .cx .board.mini { width: 100%; max-width: 150px; margin: 0; }
+  .cx.sel { background: #dfeaff; border-color: var(--blue); }
+  .cx.shake { animation: shake .35s; }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .cx-solved { border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; font-weight: 700; }
+  .cx-solved .lab { font-size: .85em; text-transform: uppercase; letter-spacing: .05em; }
+  .cx-solved .board.mini { max-width: 160px; }
+  .g0 { background: #fbe3a6; } .g1 { background: #bfe3c7; } .g2 { background: #c7d8f5; } .g3 { background: #e3c9ef; }
+  .fams { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .fam { border-radius: 12px; padding: 12px 14px; border: 2px solid rgba(0,0,0,.08); }
+  .fam h3 { margin: 0 0 4px; font-size: 1.1em; }
+  .fam .tip { font-size: .92em; color: #333; margin: 0 0 8px; }
+  .fam .names { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fname { font: inherit; font-weight: 700; padding: 5px 10px; border: 1.5px solid rgba(0,0,0,.25); border-radius: 8px; background: rgba(255,255,255,.75); cursor: pointer; color: var(--ink); }
+  .fname b { color: #b3261e; text-decoration: underline; text-decoration-thickness: 2px; }
+  .fname.dim { opacity: .4; }
+  .fdetail { margin-top: 12px; }
+  .f0 { background: #fdf0c8; } .f1 { background: #ffd9c2; } .f2 { background: #d6efe0; } .f3 { background: #dbe7fb; }
+  .f4 { background: #eadcf6; } .f5 { background: #f6dbe6; } .f6 { background: #e8e8e8; } .f7 { background: #d9f2f2; } .f8 { background: #fff7d6; }
   .tm { margin: 18px 0 0; font-size: .8em; color: #6a7383; }
 
   @media (max-width: 700px) {
     body { padding: 12px; font-size: 16px; }
     .ovals { gap: 6px; }
+    .cx-grid { gap: 5px; } .cx { min-height: 70px; padding: 2px; } .cx.sym { font-size: 1.5em; } .cx.nm { font-size: .7em; overflow-wrap: normal; }
     .oval { min-height: 80px; border-radius: 28px; padding: 8px 6px; }
     .oval h3 { font-size: .8em; }
     .face .sym { font-size: 4.4em; }
@@ -151,6 +175,8 @@
     <button class="pill on" type="button" data-tab="cards">Flashcards</button>
     <button class="pill" type="button" data-tab="sort">Sort</button>
     <button class="pill" type="button" data-tab="game">Find the Elements</button>
+    <button class="pill" type="button" data-tab="cx">Connections</button>
+    <button class="pill" type="button" data-tab="spell">Spelling</button>
     <button class="pill" type="button" data-tab="progress">Progress</button>
   </div>
 
@@ -232,12 +258,46 @@
     <div class="row">
       <button class="btn" id="gStart" type="button">Start</button>
       <label class="lbl"><input type="checkbox" id="gEasy"> Easy round: show the row right away</label>
+    </div>
+    <div class="row">
+      <span class="lbl">Board:</span>
+      <button class="pill" type="button" data-gboard="sym">Symbols</button>
+      <button class="pill" type="button" data-gboard="num">Numbers only</button>
+      <button class="pill" type="button" data-gboard="blank">Blank</button>
       <label class="lbl"><input type="checkbox" id="gTimed"> Time me</label>
       <span class="lbl" id="gTime"></span>
     </div>
     <div class="boardscroll"><div class="board" id="gBoard"></div></div>
     <div class="legend"><span><i style="border:2.5px solid var(--orange)"></i>one of the 42</span><span><i style="background:#e6e6e6"></i>metalloid staircase</span>
       <span><i style="background:var(--metal)"></i>metal</span><span><i style="background:var(--nonmetal)"></i>nonmetal</span><span><i style="background:var(--metalloid)"></i>metalloid</span></div>
+  </div>
+
+  <!-- CONNECTIONS -->
+  <div class="panel" id="tab-cx" hidden>
+    <div class="prompt">Element Connections</div>
+    <p class="note" style="margin-top:0" id="cxHow"></p>
+    <div class="row" style="margin-top:10px">
+      <span class="lbl">Groups:</span>
+      <button class="pill" type="button" data-cxmode="el">Same element</button>
+      <button class="pill" type="button" data-cxmode="fam">Same family</button>
+    </div>
+    <div id="cxSolved"></div>
+    <div class="cx-grid" id="cxGrid"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="cxSubmit" type="button" disabled>Submit</button>
+      <button class="btn alt" id="cxShuffle" type="button">Shuffle</button>
+      <button class="btn alt" id="cxClear" type="button">Deselect</button>
+      <button class="btn alt" id="cxNew" type="button">New puzzle</button>
+      <span class="lbl" id="cxMsg"></span>
+    </div>
+  </div>
+
+  <!-- SPELLING FAMILIES -->
+  <div class="panel" id="tab-spell" hidden>
+    <div class="prompt">Spelling families</div>
+    <p class="note" style="margin-top:0">The 42 names fall into a few families that share an ending. Learn the pattern once, then just the tricky letters (in <b style="color:#b3261e;text-decoration:underline">red</b>). Tap a name to see its symbol and where it lives. Names outside the element group you picked are faded.</p>
+    <div class="fams" id="fams"></div>
+    <div class="fdetail" id="fdetail"></div>
   </div>
 
   <!-- PROGRESS -->
@@ -465,7 +525,7 @@
       if (opts.buttons) { node.type = 'button'; node.setAttribute('aria-label', 'Element ' + z + ', ' + ALLSYM[z - 1]); }
       node.className = 'sq' + (BYZ[z] ? ' quiz' : '') + (STAIR[z] ? ' stair' : '');
       node.style.gridRow = p[0]; node.style.gridColumn = p[1];
-      if (!opts.mini) node.innerHTML = '<span class="n">' + z + '</span>' + (opts.hideSym ? '' : ALLSYM[z - 1]);
+      if (!opts.mini && !opts.blank) node.innerHTML = '<span class="n">' + z + '</span>' + (opts.hideSym ? '' : ALLSYM[z - 1]);
       node.setAttribute('data-z', z);
       container.appendChild(node);
       cells[z] = node;
@@ -481,9 +541,11 @@
   function setTab(t) {
     tab = t;
     [].forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
-    ['cards', 'sort', 'game', 'progress'].forEach(function (k) { document.getElementById('tab-' + k).hidden = k !== t; });
+    ['cards', 'sort', 'game', 'cx', 'spell', 'progress'].forEach(function (k) { document.getElementById('tab-' + k).hidden = k !== t; });
     if (t === 'progress') renderProgress();
     if (t === 'sort') resetSort();
+    if (t === 'cx' && !cx) newCx();
+    if (t === 'spell') renderFams();
     if (t === 'cards') renderHome();
   }
   [].forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.addEventListener('click', function () { stopRun(); stopGame(); setTab(b.getAttribute('data-tab')); }); });
@@ -491,7 +553,7 @@
     S.set = k; save();
     [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.classList.toggle('on', b.getAttribute('data-set') === k); });
     stopRun(); stopGame();
-    renderHome(); renderProgress(); resetGameBoard(); resetSort();
+    renderHome(); renderProgress(); resetGameBoard(); resetSort(); cx = null; if (tab === 'cx') newCx(); renderFams();
   }
   [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.addEventListener('click', function () { setSet(b.getAttribute('data-set')); }); });
   function setCatMode(m) {
@@ -867,16 +929,22 @@
   // ---------------- Find the Elements ----------------
   var g = null, gCells = {}, gTimer = null;
   function resetGameBoard() {
-    gCells = buildBoard(document.getElementById('gBoard'), { buttons: true });
+    var bm = S.gBoard || 'sym';
+    gCells = buildBoard(document.getElementById('gBoard'), { buttons: true, hideSym: bm === 'num', blank: bm === 'blank' });
+    [].forEach.call(document.querySelectorAll('[data-gboard]'), function (b) { b.classList.toggle('on', b.getAttribute('data-gboard') === bm); });
     Object.keys(gCells).forEach(function (z) { gCells[z].addEventListener('click', function () { tapGame(parseInt(z, 10)); }); });
     document.getElementById('gPrompt').textContent = 'Find the Elements';
     document.getElementById('gStatus').textContent = 'Tap the square for each element named. Orange squares are the 42 elements.';
     document.getElementById('gStart').textContent = 'Start';
-    var best = S.best[S.set];
+    var best = S.best[bestKey()];
     document.getElementById('gTime').textContent = best ? 'Best time: ' + fmt(best) : '';
     // The first round of each element group is an easy round; after one is finished, hints wait for 2 misses.
     document.getElementById('gEasy').checked = !(S.easyDone || {})[S.set];
   }
+  function bestKey() { return S.set + ((S.gBoard || 'sym') === 'sym' ? '' : '-' + S.gBoard); }
+  [].forEach.call(document.querySelectorAll('[data-gboard]'), function (b) {
+    b.addEventListener('click', function () { S.gBoard = b.getAttribute('data-gboard'); save(); stopGame(); resetGameBoard(); });
+  });
   function fmt(ms) { var s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function stopGame() { if (gTimer) clearInterval(gTimer); gTimer = null; g = null; }
   function clearHints() {
@@ -911,6 +979,7 @@
     if (z === target) {
       if (g.misses === 0) g.firstTry++;
       gCells[z].classList.add('found', e.cat);
+      gCells[z].innerHTML = '<span class="n">' + z + '</span>' + e.sym;  // on numbers-only / blank boards, show what was found
       g.queue.shift();
       nextTarget();
       return;
@@ -936,13 +1005,159 @@
     if (g.timed && g.easy) { clearInterval(gTimer); gTimer = null; msg += ' (Best times count only without the easy round.)'; }
     else if (g.timed) {
       clearInterval(gTimer); gTimer = null;
-      var best = S.best[S.set];
-      if (!best || ms < best) { S.best[S.set] = ms; save(); msg += ' New best time: ' + fmt(ms) + '.'; }
+      var best = S.best[bestKey()];
+      if (!best || ms < best) { S.best[bestKey()] = ms; save(); msg += ' New best time: ' + fmt(ms) + '.'; }
       else msg += ' Time: ' + fmt(ms) + ' (best ' + fmt(best) + ').';
     }
     document.getElementById('gPrompt').textContent = 'Done!';
     document.getElementById('gStatus').textContent = msg;
     g = null;
+  }
+
+  // ---------------- Element Connections ----------------
+  // 16 tiles, 4 hidden groups. "Same element": symbol, name, atomic number, and location (mini map) of 4 elements.
+  // "Same family": 4 elements from each of 4 families, shown as symbols or names.
+  var FAMS = [
+    { label: 'Halogens', zs: [9, 17, 35, 53] },
+    { label: 'Noble gases', zs: [2, 10, 18, 36, 86] },
+    { label: 'Alkali & alkaline earth metals (groups 1-2)', zs: [3, 4, 11, 12, 19, 20] },
+    { label: 'Transition metals', zs: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 78, 79, 80] }
+  ];
+  var cx = null;
+  function cxMode() { return S.cxMode === 'fam' ? 'fam' : 'el'; }
+  function newCx() {
+    var mode = cxMode(), groups = [];
+    [].forEach.call(document.querySelectorAll('[data-cxmode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-cxmode') === mode); });
+    document.getElementById('cxHow').textContent = mode === 'el'
+      ? 'Find 4 groups of 4. Each group is one element: its symbol, its name, its atomic number, and its spot on the table. Tap 4 tiles, then Submit.'
+      : 'Find 4 groups of 4 elements from the same family (all 42 elements). Tap 4 tiles, then Submit.';
+    var tiles = [];
+    if (mode === 'el') {
+      var pool = shuffle(SETS[S.set].map(function (e) { return e.z; })).slice(0, 4);
+      pool.forEach(function (z, gi) {
+        var e = BYZ[z];
+        groups.push({ label: e.sym + ' · ' + e.name + ' · ' + e.z, z: z });
+        tiles.push({ g: gi, kind: 'sym', text: e.sym }, { g: gi, kind: 'nm', text: e.name },
+                   { g: gi, kind: 'num', text: '#' + e.z }, { g: gi, kind: 'map', z: z });
+      });
+    } else {
+      FAMS.forEach(function (f, gi) {
+        groups.push({ label: f.label });
+        shuffle(f.zs.slice()).slice(0, 4).forEach(function (z) {
+          var e = BYZ[z], useSym = Math.random() < 0.5;
+          tiles.push({ g: gi, kind: useSym ? 'sym' : 'nm', text: useSym ? e.sym : e.name, z: z });
+        });
+      });
+    }
+    cx = { groups: groups, tiles: shuffle(tiles), sel: [], solved: [], mistakes: 0 };
+    renderCx();
+  }
+  function renderCx() {
+    var grid = document.getElementById('cxGrid');
+    grid.innerHTML = '';
+    cx.tiles.forEach(function (t, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'cx ' + t.kind + (cx.sel.indexOf(i) >= 0 ? ' sel' : '');
+      b.setAttribute('data-i', i); b.setAttribute('data-g', t.g);
+      if (t.kind === 'map') {
+        b.setAttribute('aria-label', 'Location on the periodic table');
+        var m = document.createElement('div'); m.className = 'board mini'; b.appendChild(m);
+        buildBoard(m, { mini: true })[t.z].classList.add('hit');
+      } else b.textContent = t.text;
+      b.addEventListener('click', function () {
+        var k = cx.sel.indexOf(i);
+        if (k >= 0) cx.sel.splice(k, 1); else if (cx.sel.length < 4) cx.sel.push(i);
+        document.getElementById('cxMsg').textContent = '';
+        renderCx();
+      });
+      grid.appendChild(b);
+    });
+    var sol = document.getElementById('cxSolved');
+    sol.innerHTML = '';
+    cx.solved.forEach(function (gi) {
+      var d = document.createElement('div'), gr = cx.groups[gi];
+      d.className = 'cx-solved g' + gi;
+      d.innerHTML = '<div class="lab">' + gr.label + '</div>';
+      if (gr.z) { var m = document.createElement('div'); m.className = 'board mini'; d.appendChild(m); buildBoard(m, { mini: true })[gr.z].classList.add('hit'); }
+      sol.appendChild(d);
+    });
+    document.getElementById('cxSubmit').disabled = cx.sel.length !== 4;
+    if (!cx.tiles.length) document.getElementById('cxMsg').textContent = 'Solved! ' + (cx.mistakes ? cx.mistakes + ' mistake' + (cx.mistakes > 1 ? 's' : '') + '.' : 'No mistakes!');
+  }
+  document.getElementById('cxSubmit').addEventListener('click', function () {
+    if (!cx || cx.sel.length !== 4) return;
+    var gs = cx.sel.map(function (i) { return cx.tiles[i].g; }), counts = {};
+    gs.forEach(function (g) { counts[g] = (counts[g] || 0) + 1; });
+    var top = Math.max.apply(null, Object.keys(counts).map(function (k) { return counts[k]; }));
+    var msg = document.getElementById('cxMsg');
+    if (top === 4) {
+      var gi = gs[0], keep = [];
+      cx.tiles.forEach(function (t, i) { if (cx.sel.indexOf(i) < 0) keep.push(t); });
+      cx.tiles = keep; cx.sel = []; cx.solved.push(gi);
+      msg.textContent = 'Group found!';
+      renderCx();
+    } else {
+      cx.mistakes++;
+      msg.textContent = top === 3 ? 'One away!' : 'Not a group. Try again.';
+      [].forEach.call(document.querySelectorAll('#cxGrid .cx.sel'), function (b) { b.classList.add('shake'); });
+    }
+  });
+  document.getElementById('cxShuffle').addEventListener('click', function () {
+    var picked = cx.sel.map(function (i) { return cx.tiles[i]; });
+    cx.tiles = shuffle(cx.tiles);
+    cx.sel = picked.map(function (t) { return cx.tiles.indexOf(t); });
+    renderCx();
+  });
+  document.getElementById('cxClear').addEventListener('click', function () { cx.sel = []; renderCx(); });
+  document.getElementById('cxNew').addEventListener('click', function () { document.getElementById('cxMsg').textContent = ''; newCx(); });
+  [].forEach.call(document.querySelectorAll('[data-cxmode]'), function (b) {
+    b.addEventListener('click', function () { S.cxMode = b.getAttribute('data-cxmode'); save(); document.getElementById('cxMsg').textContent = ''; newCx(); });
+  });
+
+  // ---------------- Spelling families ----------------
+  // [family, tip, names with the tricky letters in [brackets]]
+  var SPELL = [
+    ['-ium', 'Most of the metals here end in <b>-ium</b>. Watch the double letters in Beryllium and Potassium, and the <b>ch</b> (like "chorus") in Chromium.',
+      'Helium Lithium Bery[ll]ium Sodium Magnesium Pota[ss]ium Calcium Scandium Titanium Vanadium [Ch]romium Uranium Plutonium'],
+    ['-inum', 'These two break the -ium pattern: <b>no i before the um</b>.', 'Alumi[num] Plati[num]'],
+    ['-ine', 'All four are <b>halogens</b>. Fluorine has <b>uo</b> (not "flour"); Chlorine starts with <b>ch</b>.', 'Fl[uo]rine [Ch]lorine Bromine Iodine'],
+    ['-on', 'The ending sounds like "un" but is spelled <b>-on</b>. Iron is said "eye-ern" but spelled i-r-o-n.', 'Boron Carbon Neon Silicon Argon Kr[y]pton Radon [Iron]'],
+    ['-gen', '<b>-gen</b> means "maker": hydrogen = water-maker, oxygen = acid-maker, nitrogen = maker of niter. Two have a <b>y</b>.', 'H[y]drogen Nitrogen Ox[y]gen'],
+    ['-er / -ur', 'Copper and Silver end <b>-er</b>. Sulfur ends <b>-ur</b>, with a u in both halves.', 'Copp[er] Silv[er] Sulf[ur]'],
+    ['short and old', 'Short names, used for thousands of years. Zinc ends in <b>c</b>, not k. Lead is spelled like "lead the way" but said "led".', 'Tin Zin[c] Gold L[ea]d'],
+    ['one of a kind', 'Phosphorus has <b>two ph</b> and ends <b>-us</b>. Manganese (Mn) is not Magnesium (Mg). Nickel ends <b>-el</b>.', '[Ph]os[ph]or[us] Mangan[ese] Cobalt Nick[el] Mercur[y]']
+  ];
+  var SNEAKY = 'H[y]drogen Ox[y]gen Ber[y]llium Kr[y]pton Mercur[y]';
+  var NAMEZ = {}; EL.forEach(function (e) { NAMEZ[e.name] = e.z; });
+  function marked(w) { return w.replace(/\[([^\]]+)\]/g, '<b>$1</b>'); }
+  function plain(w) { return w.replace(/[\[\]]/g, ''); }
+  function renderFams() {
+    var inSet = {}; SETS[S.set].forEach(function (e) { inSet[e.z] = 1; });
+    var html = SPELL.map(function (f, i) {
+      return '<div class="fam f' + i + '"><h3>' + f[0] + '</h3><p class="tip">' + f[1] + '</p><div class="names">' +
+        f[2].split(' ').map(function (w) {
+          var z = NAMEZ[plain(w)];
+          return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + marked(w) + '</button>';
+        }).join('') + '</div></div>';
+    }).join('');
+    html += '<div class="fam f8"><h3>sneaky y</h3><p class="tip">These five spell a sound with <b>y</b> where most words would use i.</p><div class="names">' +
+      SNEAKY.split(' ').map(function (w) {
+        var z = NAMEZ[plain(w)];
+        return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + marked(w) + '</button>';
+      }).join('') + '</div></div>';
+    document.getElementById('fams').innerHTML = html;
+    document.getElementById('fdetail').innerHTML = '';
+    [].forEach.call(document.querySelectorAll('#fams .fname'), function (b) {
+      b.addEventListener('click', function () {
+        var e = BYZ[+b.getAttribute('data-z')];
+        var d = document.getElementById('fdetail');
+        d.innerHTML = '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + '</div>' +
+          '<div><b>' + CATNAME[e.cat] + '</b> · ' + e.fam + '</div>' + (e.hook ? '<div class="hook">' + e.hook + '</div>' : '') +
+          '<div class="board mini" id="famMini"></div></div>';
+        buildBoard(document.getElementById('famMini'), { mini: true })[e.z].classList.add('hit');
+        d.scrollIntoView({ block: 'nearest' });
+      });
+    });
   }
 
   // ---------------- progress + backup ----------------

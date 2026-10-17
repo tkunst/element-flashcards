@@ -28,10 +28,13 @@ The test carries its own answer key for all 42 elements, so it also cross-checks
 - Sort: tap-to-place and mouse drag both land in the right oval; check scores right/wrong; "send wrong ones back" returns only the wrong ones; a perfect sort shows the staircase rule.
 - Game: the first round of a group is the easy round (row highlighted before any tap); finishing it makes the next round normal (no row until 2 misses, square revealed at 3); a correct tap counts and colors the square.
 - Backup code: reset clears progress and restore brings it back exactly.
+- Connections (same element): 16 tiles, 4 of each kind; each group's symbol, name, number and map square agree with the answer key; 3-of-4 says "One away!", 2+2 is not a group, all 4 groups solve with the mistake count shown. Same family: 4 groups solve and show the family labels.
+- Spelling families list each of the 42 names exactly once, mark the tricky letters, and tapping a name shows its symbol and map square.
+- Find the Elements on Blank and Numbers-only boards: squares hide symbols, a correct tap counts and shows the symbol.
 - With `localStorage` blocked, the warning banner shows and the cards still work.
 - No JavaScript errors anywhere.
 
-Verified by breaking the page on purpose: box promotion off, missed-card requeue removed, symbol case ignored, storage error unguarded, wrong game square accepted (2026-10-16); ladder step fixed at typing, near-miss not counted, sort always right, send-back disabled, any chunk order accepted, easy-round row not shown, easy round never marked done, row hint delayed to 3 misses (2026-10-17). Each break made the test fail.
+Verified by breaking the page on purpose: box promotion off, missed-card requeue removed, symbol case ignored, storage error unguarded, wrong game square accepted (2026-10-16); ladder step fixed at typing, near-miss not counted, sort always right, send-back disabled, any chunk order accepted, easy-round row not shown, easy round never marked done, row hint delayed to 3 misses (2026-10-17); see the commit log for later features. Each break made the test fail.
 
 ## Running locally
 
@@ -44,4 +47,4 @@ python3 tests/smoke_test.py
 
 ## If you change the page
 
-The test relies on these IDs and attributes: `#jswarn`, `#nostore`, `#stNew`, `#stDue`, `#startReview`, `#startPractice`, `#fcFace .sym` / `.nm`, `#in-name`, `#in-cat`, `#in-sym`, `#f-name`, `#f-sym`, `#fcCheck`, `#fcNext`, `#fcStop`, `.result`, `#fcInputs .cat[data-c]`, `[data-set]`, `[data-catmode]`, `[data-tab]`, `[data-namemode]`, `#fcStep`, `#fcInputs .opt[data-o]`, `#tiles .tile[data-t]`, `#built`, `#fb-name`, `#sBoard [data-z]`, `#ovals .oval[data-c]`, `#ovals .chip[data-z]`, `#sCheck`, `#sRetry`, `#sScore`, `#sRule`, `#gEasy`, `#gStart`, `#gPrompt`, `#gStatus`, `#gBoard [data-z]`, `#pBoard`, `#bkOut`, `#bkIn`, `#bkReset`, `#bkRestore`, the storage key `tklearn-element-flashcards-v1`, and `window.__tklearn`. Rename one and update `tests/smoke_test.py` in the same commit.
+The test relies on these IDs and attributes: `#jswarn`, `#nostore`, `#stNew`, `#stDue`, `#startReview`, `#startPractice`, `#fcFace .sym` / `.nm`, `#in-name`, `#in-cat`, `#in-sym`, `#f-name`, `#f-sym`, `#fcCheck`, `#fcNext`, `#fcStop`, `.result`, `#fcInputs .cat[data-c]`, `[data-set]`, `[data-catmode]`, `[data-tab]`, `[data-namemode]`, `#fcStep`, `#fcInputs .opt[data-o]`, `#tiles .tile[data-t]`, `#built`, `#fb-name`, `#sBoard [data-z]`, `#ovals .oval[data-c]`, `#ovals .chip[data-z]`, `#sCheck`, `#sRetry`, `#sScore`, `#sRule`, `#gEasy`, `[data-gboard]`, `[data-cxmode]`, `#cxGrid .cx[data-g]`, `#cxSubmit`, `#cxClear`, `#cxMsg`, `#cxSolved .lab`, `#fams .fname`, `#fdetail`, `#gStart`, `#gPrompt`, `#gStatus`, `#gBoard [data-z]`, `#pBoard`, `#bkOut`, `#bkIn`, `#bkReset`, `#bkRestore`, the storage key `tklearn-element-flashcards-v1`, and `window.__tklearn`. Rename one and update `tests/smoke_test.py` in the same commit.
