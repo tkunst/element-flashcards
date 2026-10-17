@@ -149,6 +149,8 @@
   .fname.dim { opacity: .4; }
   .gr { display: inline-block; }
   .gr.multi { border: 2px solid #2c5aa0; border-radius: 5px; background: #fff; padding: 0 3px; margin: 0 1px; }
+  .fgroup { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .fgroup + .fgroup { margin-top: 26px; }
   .olist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 14px; }
   .orow { display: flex; align-items: center; gap: 8px; font-size: .92em; }
   .orow .fname { min-width: 7.5em; text-align: left; }
@@ -1281,11 +1283,21 @@
       return '<button type="button" class="fname' + (inSet[z] ? '' : ' dim') + '" data-z="' + z + '">' + inner + '</button>';
     }
     var cards = V.cards.slice();
-    var html = cards.map(function (c, i) {
+    function cardHTML(c, i) {
       var items = c[2] === '*all' ? EL.map(function (e) { return btn(e.name, teams(e.name)); }).join('')
         : c[2].split(' ').map(function (w) { return btn(w, marked(w, view)); }).join('');
       return '<div class="fam f' + (i % 9) + (c[2] === '*all' ? ' allg' : '') + '"><h3>' + c[0] + '</h3><p class="tip">' + c[1] + '</p><div class="names">' + items + '</div></div>';
-    }).join('');
+    }
+    var html;
+    if (view === 'phon') {  // two groups with a little space between: same sound / same spelling
+      var groups = [cards.filter(function (c) { return c[0].indexOf('Same Sound') === 0; }),
+                    cards.filter(function (c) { return c[0].indexOf('Same Sound') !== 0; })];
+      html = groups.map(function (g, gi) {
+        return '<div class="fgroup">' + g.map(function (c, i) { return cardHTML(c, i + gi * 8); }).join('') + '</div>';
+      }).join('');
+    } else {
+      html = cards.map(cardHTML).join('');
+    }
     if (view === 'morph') {
       html += '<div class="fam f8 origins"><h3>Where each name comes from</h3><p class="tip">The meaning part of every name. Tap a name to hear it and see it on the table.</p><div class="olist">' +
         EL.map(function (e) { return '<div class="orow">' + btn(e.name, e.name) + '<span>' + ORIGIN[e.name] + '</span></div>'; }).join('') + '</div></div>';

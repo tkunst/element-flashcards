@@ -406,6 +406,9 @@ def connections_spelling_blank(browser):
     # Phonemes: one sound/many spellings and one spelling/many sounds
     page.click('[data-spellview="phon"]')
     check("more than one spelling" in page.locator("#spellDef").inner_text(), "phoneme definition missing")
+    groups = page.locator("#fams .fgroup")
+    check(groups.count() == 2 and groups.nth(0).locator(".fam h3").all_inner_texts()[0].startswith("Same Sound")
+          and all(h.startswith("Same Spelling") for h in groups.nth(1).locator(".fam h3").all_inner_texts()), "phoneme cards should be in two groups")
     check(page.locator('#fams .fam').first.locator('.fname b').all_inner_texts() == ["C", "C", "C", "c", "K", "Ch", "Ch", "ck", "c"], "the /k/ card should mark each spelling")
     page.click('[data-spellview="morph"]')
 
