@@ -90,6 +90,11 @@ def run(browser, label, viewport):
     page.click("#startReview")
     d, z = answer(page)
     check("right" in page.locator(".result").get_attribute("class"), "correct answer not marked right")
+    if label == "laptop":   # hear it: the answer's play button loads that element's clip
+        page.click("#fcAnswer .play")
+        page.wait_for_function("() => { const a = window.__tklearn.audio(); return a && (a.readyState >= 2 || a.error); }", timeout=10000)
+        src, err = page.evaluate("() => [window.__tklearn.audio().src, window.__tklearn.audio().error && window.__tklearn.audio().error.code]")
+        check(not err and src.endswith(f"/audio/{z:02d}-{EL[z][1].lower()}.mp3"), f"play button loaded {src} (error {err})")
     check(stored(page)["items"][f"{z}{d}"]["b"] == 2, "correct answer should move a new card to box 2")
     page.click("#fcNext")
 
@@ -362,6 +367,9 @@ def connections_spelling_blank(browser):
     check(page.locator('#fams .fname:has-text("Beryllium") b').first.inner_text() == "ll", "tricky letters not marked")
     page.click('#fams .fname:has-text("Potassium")')
     check("K · Potassium · 19" in page.locator("#fdetail").inner_text(), "tapping a name should show its details")
+    page.click("#fdetail .play")
+    page.wait_for_function("() => { const a = window.__tklearn.audio(); return a && (a.readyState >= 2 || a.error); }", timeout=10000)
+    check(page.evaluate("() => !window.__tklearn.audio().error && window.__tklearn.audio().src.endsWith('/audio/19-potassium.mp3')"), "Spelling detail should play potassium")
     check("poh-TASS-ee-um" in page.locator("#fdetail").inner_text() and "/poʊˈtæsiəm/" in page.locator("#fdetail").inner_text(), "details should show how it sounds")
     check(page.locator('#fdetail .sq.hit[data-z="19"]').count() == 1, "detail map should mark potassium")
 
@@ -425,7 +433,13 @@ def data_checks():
         check(n in tip.split('"ahn"')[1].split('"un"')[0] and say[n].endswith("ɑn"), f"-on tip: {n} should be listed as and sound like 'ahn'")
     for n in ("Carbon", "Silicon"):
         check(n in tip.split('"un"')[1] and say[n].endswith("ən"), f"-on tip: {n} should be listed as and sound like 'un'")
-    print("ok  data: letter teams spell all 42 names; no ladder piece splits a team; -on sound claims match the IPA")
+    # Every element has its recorded clip: audio/NN-name.mp3, a real MP3.
+    for z, (_, name, _) in EL.items():
+        clip = pathlib.Path(__file__).resolve().parent.parent / "audio" / f"{z:02d}-{name.lower()}.mp3"
+        check(clip.exists() and clip.stat().st_size > 2000, f"missing or empty clip: {clip.name}")
+        head = clip.read_bytes()[:3]
+        check(head == b"ID3" or (head[0] == 0xFF and head[1] & 0xE0 == 0xE0), f"{clip.name} is not an MP3")
+    print("ok  data: 42 recorded clips; letter teams spell all 42 names; no ladder piece splits a team; -on sound claims match the IPA")
 
 
 def blocked_storage(browser):

@@ -150,6 +150,8 @@
   .gr.split { border: 2px dashed #b3261e; border-radius: 5px; padding: 0 2px; margin: 0 1px; }
   .glegend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .9em; color: var(--soft); margin: 0 0 10px; }
   .fdetail { margin-top: 12px; }
+  .play { font: inherit; font-size: .9em; font-weight: 700; padding: 4px 12px; margin-left: 8px; border: 2px solid var(--blue); border-radius: 999px; background: #fff; color: var(--blue); cursor: pointer; vertical-align: middle; }
+  .play.on { background: var(--blue); color: #fff; }
   .say { margin: 2px 0 4px; } .ipa { font-family: 'Charis SIL', 'Doulos SIL', 'Gentium Plus', 'Times New Roman', serif; font-size: 1.1em; }
   .f0 { background: #fdf0c8; } .f1 { background: #ffd9c2; } .f2 { background: #d6efe0; } .f3 { background: #dbe7fb; }
   .f4 { background: #eadcf6; } .f5 { background: #f6dbe6; } .f6 { background: #e8e8e8; } .f7 { background: #d9f2f2; } .f8 { background: #fff7d6; }
@@ -796,7 +798,7 @@
       : outcome === 'fixed' ? '<div class="result close">Got it after fixing. It stays at the same level.</div>'
       : '<div class="result right">Right!</div>';
     var ans = document.getElementById('fcAnswer');
-    ans.innerHTML = head + '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + '</div>' +
+    ans.innerHTML = head + '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + playBtn(e) + '</div>' +
       '<div><b>' + CATNAME[e.cat] + '</b> · ' + e.fam + '</div>' + (e.hook ? '<div class="hook">' + e.hook + '</div>' : '') +
       '<div class="board mini" id="miniBoard"></div></div>';
     var cells = buildBoard(document.getElementById('miniBoard'), { mini: true });
@@ -1211,7 +1213,7 @@
       b.addEventListener('click', function () {
         var e = BYZ[+b.getAttribute('data-z')];
         var d = document.getElementById('fdetail');
-        d.innerHTML = '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + '</div>' +
+        d.innerHTML = '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + playBtn(e) + '</div>' +
           '<div class="say">Sounds like <b>' + SAY[e.name][1] + '</b> · <span class="ipa">/' + SAY[e.name][0] + '/</span></div>' +
           '<div><b>' + CATNAME[e.cat] + '</b> · ' + e.fam + '</div>' + (e.hook ? '<div class="hook">' + e.hook + '</div>' : '') +
           '<div class="board mini" id="famMini"></div></div>';
@@ -1220,6 +1222,25 @@
       });
     });
   }
+
+  // ---------------- hear it: recorded clips (audio/NN-name.mp3), played only when tapped ----------------
+  var player = null;
+  function clipFor(e) { return 'audio/' + (e.z < 10 ? '0' : '') + e.z + '-' + e.name.toLowerCase() + '.mp3'; }
+  function playBtn(e) { return '<button type="button" class="play" data-z="' + e.z + '" aria-label="Hear ' + e.name + '">▶ Hear it</button>'; }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('.play') : null;
+    if (!b) return;
+    var e = BYZ[+b.getAttribute('data-z')];
+    try {
+      if (player) player.pause();
+      player = new Audio(clipFor(e));
+      b.classList.add('on');
+      player.addEventListener('ended', function () { b.classList.remove('on'); });
+      player.addEventListener('error', function () { b.classList.remove('on'); });
+      var p = player.play();
+      if (p && p.catch) p.catch(function () { b.classList.remove('on'); });
+    } catch (err) { b.classList.remove('on'); }
+  });
 
   // ---------------- progress + backup ----------------
   function renderProgress() {
@@ -1269,7 +1290,7 @@
   setTab('cards');
 
   // test hook: lets the smoke test move the clock forward a day
-  window.__tklearn = { shiftDays: function (n) { var real = today; today = function () { return real() + n; }; renderHome(); } };
+  window.__tklearn = { audio: function () { return player; }, shiftDays: function (n) { var real = today; today = function () { return real() + n; }; renderHome(); } };
 })();
 </script>
 </body>
