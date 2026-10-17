@@ -322,6 +322,12 @@ def sort(browser):
     page.click("#sCheck")
     check(page.locator("#sScore").inner_text().startswith("14 / 14 right"), f"all placed correctly should score 14/14: {page.locator('#sScore').inner_text()}")
     check(page.locator("#sRule").is_visible(), "the staircase rule should appear after a perfect sort")
+    # ...and the whole table comes back, every element colored by category, so the full staircase shows
+    check(page.locator("#sBoard .sq.found").count() == 118 and page.locator("#sBoard .sq.placed").count() == 0, "perfect sort should color the whole table")
+    for z, cat in ((5, "metalloid"), (32, "metalloid"), (52, "metalloid"), (34, "nonmetal"), (54, "nonmetal"), (1, "nonmetal"), (55, "metal"), (84, "metal"), (13, "metal")):
+        check(cat in page.locator(f'#sBoard [data-z="{z}"]').get_attribute("class").split(), f"element {z} should be colored {cat}")
+    for e_z, (_, _, cat) in EL.items():   # the 42 agree with the page's own answer key
+        check(cat in page.locator(f'#sBoard [data-z="{e_z}"]').get_attribute("class").split(), f"element {e_z} colored wrong")
     # 16-30: S, Cl, Ar one by one + K..Zn as one block -> 4 things; the block in nonmetal is wrong
     page.click('[data-set="b"]')
     check(page.locator("#sBoard .sq.blk").count() == 12, "K through Zn should be the block in 16-30")

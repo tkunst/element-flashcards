@@ -255,7 +255,7 @@
       <div class="oval" data-c="metalloid"><h3>Metalloid</h3><div class="in"></div></div>
       <div class="oval" data-c="nonmetal"><h3>Nonmetal</h3><div class="in"></div></div>
     </div>
-    <p class="note" id="sRule" hidden>The pattern: elements <b>left of the staircase</b> (the gray squares) are metals, elements <b>on</b> it are metalloids, and elements <b>right</b> of it are nonmetals. The one exception is hydrogen: it sits on the left but is a nonmetal.</p>
+    <p class="note" id="sRule" hidden>The pattern, now on the whole table: elements <b>left of the staircase</b> are metals (blue), elements <b>on</b> it are metalloids (green), and elements <b>right</b> of it are nonmetals (yellow). The one exception is hydrogen: it sits on the left but is a nonmetal.</p>
   </div>
 
   <!-- GAME -->
@@ -938,13 +938,24 @@
     });
     document.getElementById('sScore').textContent = right + ' / ' + units.length + ' right' + (left ? ' · ' + left + ' still on the table' : '');
     document.getElementById('sRetry').hidden = !wrong;
-    if (!wrong && !left) document.getElementById('sRule').hidden = false;
+    if (!wrong && !left) { document.getElementById('sRule').hidden = false; showWholeTable(); }
   });
   document.getElementById('sRetry').addEventListener('click', function () {
     Object.keys(sPlaced).forEach(function (u) { if (sPlaced[u] !== unitCat(u)) backToTable(u); });
     [].forEach.call(document.querySelectorAll('#ovals .chip'), function (c) { c.classList.add('right'); });
   });
   document.getElementById('sReset').addEventListener('click', resetSort);
+  // After a perfect sort: every element back on the table, colored by category, so the whole staircase shows.
+  // Metalloids = the six on the staircase (B, Si, Ge, As, Sb, Te). Nonmetals = H + everything right of the stairs.
+  var NONMETAL_Z = [1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 85, 86, 117, 118];
+  function catOf(z) {
+    if (STAIR[z]) return 'metalloid';
+    return NONMETAL_Z.indexOf(z) >= 0 ? 'nonmetal' : 'metal';
+  }
+  function showWholeTable() {
+    sCells = buildBoard(document.getElementById('sBoard'), {});
+    Object.keys(sCells).forEach(function (k) { sCells[k].classList.add('found', catOf(+k)); });
+  }
 
   // ---------------- Find the Elements ----------------
   var g = null, gCells = {}, gTimer = null;
