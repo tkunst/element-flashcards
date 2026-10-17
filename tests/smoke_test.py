@@ -362,7 +362,7 @@ def connections_spelling_blank(browser):
     check(page.locator('#fams .fname:has-text("Beryllium") b').first.inner_text() == "ll", "tricky letters not marked")
     page.click('#fams .fname:has-text("Potassium")')
     check("K · Potassium · 19" in page.locator("#fdetail").inner_text(), "tapping a name should show its details")
-    check("puh-TASS-ee-um" in page.locator("#fdetail").inner_text() and "/pəˈtæsiəm/" in page.locator("#fdetail").inner_text(), "details should show how it sounds")
+    check("poh-TASS-ee-um" in page.locator("#fdetail").inner_text() and "/poʊˈtæsiəm/" in page.locator("#fdetail").inner_text(), "details should show how it sounds")
     check(page.locator('#fdetail .sq.hit[data-z="19"]').count() == 1, "detail map should mark potassium")
 
     # --- Letter-teams view: multi-letter teams boxed, split teams dashed ---
