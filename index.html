@@ -147,7 +147,8 @@
   .fam { border-radius: 12px; padding: 12px 14px; border: 2px solid rgba(0,0,0,.08); }
   .fam h3 { margin: 0 0 4px; font-size: 1.1em; }
   .fam .tip { font-size: .92em; color: #333; margin: 0 0 8px; }
-  .fam .tip b { white-space: nowrap; }  /* keep an ending like -um together on one line */
+  .fam .tip b { white-space: nowrap; }
+  .wsum { display: block; white-space: nowrap; font-weight: 700; }  /* a word sum stays on one line */  /* keep an ending like -um together on one line */
   .fam .names { display: flex; flex-wrap: wrap; gap: 6px; }
   .fname { font: inherit; font-weight: 700; padding: 5px 10px; border: 1.5px solid rgba(0,0,0,.25); border-radius: 8px; background: rgba(255,255,255,.75); cursor: pointer; color: var(--ink); }
   .fname b { color: #b3261e; text-decoration: underline; text-decoration-thickness: 2px; }
@@ -1191,7 +1192,7 @@
     morph: {
       def: 'A <b>morpheme</b> is the smallest part of a word that carries meaning. Most element names are built from a meaning part plus an ending.',
       cards: [
-        ['-gen: "maker"', '<b>-gen</b> means maker. It comes from Greek <b>-genēs</b>, "born of, made by", the same family as <b>gene</b>, <b>genesis</b> and <b>generate</b>. <b>hydro</b> = water, <b>oxy</b> = sharp or acid, <b>nitro</b> = niter (a salt). The French chemist Lavoisier named hydrogen "water-maker" because it burns to make water, and oxygen "acid-maker" because he thought every acid had oxygen in it. He was wrong about acids, but the name stuck.', 'Hydro[gen] Nitro[gen] Oxy[gen]'],
+        ['-gen: "maker"', '<b>-gen</b> means maker. It comes from Greek <b>-genēs</b>, "born of, made by", the same family as <b>gene</b>, <b>genesis</b> and <b>generate</b>. <span class="wsum">hydro + gen → hydrogen</span><span class="wsum">hydro + gen = water + maker</span><span class="wsum">oxy + gen = acid + maker</span><span class="wsum">nitro + gen = niter (a salt) + maker</span>The French chemist Lavoisier named hydrogen "water-maker" because it burns to make water, and oxygen "acid-maker" because he thought every acid had oxygen in it. He was wrong about acids, but the name stuck.', 'Hydro[gen] Nitro[gen] Oxy[gen]'],
         ['Symbols from older names', 'These symbols come from the element\'s Latin name, not the English one. The Latin word is the meaning part.', '*latin'],
         ['Naming pattern: -ium and -um for metals', 'Chemists end most metal names with <b>-ium</b>, said /iəm/. (Helium got it because scientists first thought it was a metal.) Aluminum and Platinum use <b>-um</b>.',
           'Hel[ium] Lith[ium] Beryll[ium] Sod[ium] Magnes[ium] Potass[ium] Calc[ium] Scand[ium] Titan[ium] Vanad[ium] Chrom[ium] Uran[ium] Pluton[ium] Alumin[um] Platin[um]'],
@@ -1235,11 +1236,11 @@
   };
   // Where each name comes from (its meaning parts).
   var ORIGIN = {
-    Hydrogen: 'hydro = water + gen = maker', Helium: 'helios = sun (Greek)', Lithium: 'lithos = stone (Greek)',
+    Hydrogen: 'hydro + gen → hydrogen; hydro + gen = water + maker', Helium: 'helios = sun (Greek)', Lithium: 'lithos = stone (Greek)',
     Beryllium: 'beryl, a gemstone', Boron: 'borax, a mineral', Carbon: 'carbo = coal (Latin)',
-    Nitrogen: 'niter, a salt + gen = maker', Oxygen: 'oxy = sharp, acid + gen = maker', Fluorine: 'fluere = to flow (Latin), from the mineral fluorite. Same flu- as fluid, fluent and fluorescent',
+    Nitrogen: 'nitro + gen → nitrogen; nitro + gen = niter (a salt) + maker', Oxygen: 'oxy + gen → oxygen; oxy + gen = acid + maker', Fluorine: 'fluere = to flow (Latin), from the mineral fluorite. Same flu- as fluid, fluent and fluorescent',
     Neon: 'neos = new (Greek)', Sodium: 'soda; symbol Na from natrium', Magnesium: 'Magnesia, a region of Greece',
-    Aluminum: 'alum, a salt', Silicon: 'silex = flint (Latin)', Phosphorus: 'phos = light + phoros = bearer: "light-bearer" (Greek)',
+    Aluminum: 'alum, a salt', Silicon: 'silex = flint (Latin)', Phosphorus: 'phos + phor + us → phosphorus; phos + phor = light + bearer (Greek)',
     Sulfur: 'sulfur (Latin)', Chlorine: 'chloros = pale green (Greek)', Argon: 'argos = idle, lazy (Greek): it barely reacts',
     Potassium: 'potash ("pot ash"); symbol K from kalium', Calcium: 'calx = lime (Latin)', Scandium: 'Scandinavia',
     Titanium: 'the Titans of Greek myth', Vanadium: 'Vanadís, a Norse goddess', Chromium: 'chroma = color (Greek)',
@@ -1248,7 +1249,7 @@
     Bromine: 'bromos = stench (Greek)', Krypton: 'kryptos = hidden (Greek)', Silver: 'Old English; symbol Ag from argentum (Latin)',
     Tin: 'Old English; symbol Sn from stannum (Latin)', Iodine: 'iodes = violet (Greek)', Platinum: 'platina = little silver (Spanish)',
     Gold: 'Old English; symbol Au from aurum (Latin)', Mercury: 'the planet Mercury; symbol Hg from hydrargyrum = water-silver', Lead: 'Old English; symbol Pb from plumbum (Latin), like plumbing',
-    Radon: 'radium + -on', Uranium: 'the planet Uranus', Plutonium: 'the dwarf planet Pluto'
+    Radon: 'radium + on → radon (radon comes from radium)', Uranium: 'the planet Uranus', Plutonium: 'the dwarf planet Pluto'
   };
   // Symbols that come from a Latin name (shown as: Sodium  Na = natrium)
   var LATIN = { Sodium: 'natrium', Potassium: 'kalium', Iron: 'ferrum', Copper: 'cuprum', Silver: 'argentum', Tin: 'stannum', Gold: 'aurum', Mercury: 'hydrargyrum', Lead: 'plumbum' };

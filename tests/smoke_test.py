@@ -419,6 +419,7 @@ def connections_spelling_blank(browser):
     origins = page.locator("#fams .origins .fname").all_inner_texts()
     check(sorted(origins) == sorted(v[1] for v in EL.values()), "Where each name comes from must list all 42 names once")
     check(page.locator('#fams .fname:has-text("Hydrogen") b').first.inner_text() == "gen", "morpheme -gen not marked in Hydrogen")
+    check("hydro + gen → hydrogen" in page.locator("#fams").inner_text() and "hydro + gen = water + maker" in page.locator("#fams").inner_text(), "word sum and meaning sum for hydrogen")
     lat = page.locator('#fams .fam:has(h3:has-text("Symbols from older names")) .fname')
     check(lat.count() == 9 and lat.first.inner_text() == "Sodium Na = natrium", f"Latin-symbol labels: {lat.all_inner_texts()[:2]}")
     check(lat.first.locator(".lat").inner_text() == "Na = natrium", "symbol and Latin should be in their own colored span")
