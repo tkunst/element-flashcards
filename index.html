@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element Flashcards · 42 Elements</title>
+<meta name="description" content="Spaced-repetition flashcards and a find-it game for 42 common elements: name, symbol, and metal, nonmetal, or metalloid. No account; progress stays on this device.">
+<style>
+  :root {
+    --ink: #1d2330; --soft: #505a6b; --bg: #f4f5f7; --card: #fff; --line: #d5d9e0;
+    --blue: #2c5aa0; --orange: #e8620c; --right: #1e8a44; --wrong: #c0392b; --close: #c27a12;
+    --metal: #9ec5fe; --nonmetal: #fff59d; --metalloid: #a5d6a7;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+    font-size: 17px; line-height: 1.4; color: var(--ink); background: var(--bg); }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .home { display: inline-block; margin: 0 0 8px; font-weight: 600; color: var(--blue); text-decoration: none; }
+  .home:hover { text-decoration: underline; }
+  h1 { font-size: 1.5em; margin: 0 0 4px; }
+  .sub { color: var(--soft); margin: 0 0 14px; }
+  .warn { background: #fff4d6; border: 1px solid #e6c46a; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; }
+  [hidden] { display: none !important; }
+
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+  .row .lbl { font-weight: 600; color: var(--soft); margin-right: 2px; }
+  .pill { font: inherit; font-weight: 600; padding: 8px 14px; border: 2px solid var(--blue); background: #fff; color: var(--blue);
+    border-radius: 999px; cursor: pointer; }
+  .pill.on { background: var(--blue); color: #fff; }
+  .tabs .pill { padding: 10px 16px; }
+
+  .panel { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+  .stat { background: #eef2f8; border-radius: 10px; padding: 8px 14px; min-width: 120px; }
+  .stat b { display: block; font-size: 1.5em; line-height: 1.1; }
+  .stat span { color: var(--soft); font-size: .88em; }
+  .btn { font: inherit; font-weight: 700; padding: 11px 18px; border: 0; border-radius: 10px; background: var(--blue); color: #fff; cursor: pointer; }
+  .btn.alt { background: #fff; color: var(--blue); border: 2px solid var(--blue); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .note { color: var(--soft); font-size: .92em; margin: 10px 0 0; }
+
+  /* flashcard */
+  .fc { max-width: 560px; margin: 0 auto; }
+  .fc .count { color: var(--soft); font-size: .9em; text-align: right; margin-bottom: 6px; }
+  .face { position: relative; border: 2px solid var(--line); border-radius: 14px; background: #fff; text-align: center; padding: 26px 16px 22px; margin-bottom: 14px; }
+  .face .z { position: absolute; top: 8px; right: 14px; font-weight: 800; font-size: 1.3em; }
+  .face .sym { font-weight: 900; font-size: 5.2em; line-height: 1; }
+  .face .nm { font-weight: 800; font-size: 2.3em; line-height: 1.1; }
+  .face .ask { color: var(--soft); margin-top: 10px; }
+  .field { margin: 0 0 12px; }
+  .field label { display: block; font-weight: 700; margin-bottom: 4px; }
+  .field input { font: inherit; font-size: 1.1em; width: 100%; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px; }
+  .field input:focus { outline: none; border-color: var(--blue); }
+  .field.right input { border-color: var(--right); background: #e3f6e9; }
+  .field.wrong input { border-color: var(--wrong); background: #fde8e6; }
+  .field.close input { border-color: var(--close); background: #fff4d6; }
+  .fb { font-weight: 600; margin-top: 4px; min-height: 1.2em; }
+  .fb.right { color: var(--right); } .fb.wrong { color: var(--wrong); } .fb.close { color: #8a5a00; }
+  .cats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cat { font: inherit; font-weight: 700; flex: 1 1 120px; padding: 12px 10px; border: 2px solid #8a93a3; border-radius: 10px; cursor: pointer; color: var(--ink); }
+  .cat[data-c="metal"] { background: var(--metal); } .cat[data-c="nonmetal"] { background: var(--nonmetal); } .cat[data-c="metalloid"] { background: var(--metalloid); }
+  .cat.sel { outline: 4px solid var(--ink); outline-offset: 1px; }
+  .cat.right { border-color: var(--right); outline: 4px solid var(--right); }
+  .cat.wrong { border-color: var(--wrong); outline: 4px dashed var(--wrong); }
+  .ans { border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; border: 2px solid var(--line); }
+  .ans.metal { background: #e8f1ff; } .ans.nonmetal { background: #fffbe0; } .ans.metalloid { background: #e8f5e9; }
+  .ans .big { font-size: 1.35em; font-weight: 800; }
+  .ans .hook { font-style: italic; margin-top: 4px; }
+  .result { font-weight: 800; font-size: 1.1em; margin: 0 0 10px; }
+  .result.right { color: var(--right); } .result.wrong { color: var(--wrong); } .result.close { color: #8a5a00; }
+  .done { text-align: center; padding: 10px 0; }
+  .done .big { font-size: 1.6em; font-weight: 800; margin-bottom: 6px; }
+
+  /* periodic-table board (game, mini-map, progress) */
+  .boardscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .board { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 2px; min-width: 640px; }
+  .board.mini { min-width: 0; max-width: 360px; gap: 1px; margin: 8px 0 0; }
+  .sq { position: relative; aspect-ratio: 1 / 1.1; border: 1px solid #aab2bf; border-radius: 3px; background: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .82em; color: #555; padding: 0; font-family: inherit; }
+  .board.mini .sq { border-radius: 1px; font-size: 0; }
+  .board.mini .sq.quiz { border: 1px solid #aab2bf; }
+  .sq .n { position: absolute; top: 1px; left: 2px; font-size: .62em; font-weight: 600; color: #777; }
+  .sq.quiz { border: 2.5px solid var(--orange); color: var(--orange); }
+  .sq.stair { background: #e6e6e6; }
+  .sq.gap { visibility: hidden; }
+  .sq.hit { background: var(--orange) !important; border-color: var(--orange); }
+  button.sq { cursor: pointer; }
+  .sq.found.metal { background: var(--metal); color: var(--ink); } .sq.found.nonmetal { background: var(--nonmetal); color: var(--ink); }
+  .sq.found.metalloid { background: var(--metalloid); color: var(--ink); }
+  .sq.miss { background: #fde8e6; border-color: var(--wrong); }
+  .sq.rowhint { box-shadow: inset 0 0 0 3px #f0a500; }
+  .sq.reveal { background: #f0a500 !important; color: #1d2330; }
+  .sq.b0 { background: #fff; } .sq.b1 { background: #fde8e6; } .sq.b2 { background: #fff4d6; } .sq.b3 { background: #d9f0e0; } .sq.b4 { background: #9fd8b0; } .sq.b5 { background: #4fb371; color: #fff; }
+  .prompt { font-size: 1.4em; font-weight: 800; margin: 0 0 4px; }
+  .prompt small { font-size: .6em; font-weight: 600; color: var(--soft); }
+  .gamebar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .88em; color: var(--soft); margin-top: 10px; }
+  .legend i { display: inline-block; width: 14px; height: 14px; border: 1px solid #8a93a3; vertical-align: -2px; margin-right: 4px; border-radius: 2px; }
+  textarea { font: inherit; font-size: .85em; width: 100%; min-height: 70px; padding: 8px; border: 2px solid var(--line); border-radius: 10px; }
+  h2 { font-size: 1.15em; margin: 18px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  .tm { margin: 18px 0 0; font-size: .8em; color: #6a7383; }
+
+  @media (max-width: 700px) {
+    body { padding: 12px; font-size: 16px; }
+    .face .sym { font-size: 4.4em; }
+    .face .nm { font-size: 1.9em; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/">← All study resources</a>
+  <h1>Element Flashcards</h1>
+  <p class="sub">42 common elements: atomic numbers 1-30 plus Br, Kr, Ag, Sn, I, Pt, Au, Hg, Pb, Rn, U, Pu. Learn the name, the symbol, and whether it is a metal, nonmetal, or metalloid.</p>
+
+  <noscript><div class="warn"><b>This page needs JavaScript.</b> Open it in Chrome, Safari, Edge, or Firefox.</div></noscript>
+  <div class="warn" id="jswarn"><b>If you only see this message:</b> you're in a file preview. Open the page in a web browser.</div>
+  <div class="warn" id="nostore" hidden><b>Progress can't be saved in this browser</b> (private or guest window, or site data blocked). You can still practice, but the schedule resets when you close the page.</div>
+
+  <div class="row tabs">
+    <button class="pill on" type="button" data-tab="cards">Flashcards</button>
+    <button class="pill" type="button" data-tab="game">Find the Elements</button>
+    <button class="pill" type="button" data-tab="progress">Progress</button>
+  </div>
+
+  <div class="row" id="setrow">
+    <span class="lbl">Elements:</span>
+    <button class="pill" type="button" data-set="a">1-15</button>
+    <button class="pill" type="button" data-set="b">16-30</button>
+    <button class="pill" type="button" data-set="c">The 12 extras</button>
+    <button class="pill" type="button" data-set="all">All 42</button>
+  </div>
+
+  <!-- FLASHCARDS -->
+  <div class="panel" id="tab-cards">
+    <div id="cardHome">
+      <div class="stats">
+        <div class="stat"><b id="stDue">0</b><span>due for review</span></div>
+        <div class="stat"><b id="stNew">0</b><span>new cards today</span></div>
+        <div class="stat"><b id="stKnown">0</b><span id="stKnownOf">cards solid</span></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="startReview" type="button">Start review</button>
+        <button class="btn alt" id="startPractice" type="button">Practice all (ignore schedule)</button>
+      </div>
+      <div class="row">
+        <span class="lbl">Metal / nonmetal / metalloid:</span>
+        <button class="pill" type="button" data-catmode="type">Type it</button>
+        <button class="pill" type="button" data-catmode="tap">Tap a color</button>
+      </div>
+      <p class="note">Each element has two cards: <b>symbol → name</b> and <b>name → symbol</b>. Get a card right and it comes back after a longer gap (1, 2, 4, then 7 days). Miss it and it comes back in a few cards, and again tomorrow. A review takes about 10 minutes. Up to 12 new cards are added per day.</p>
+    </div>
+
+    <div class="fc" id="cardRun" hidden>
+      <div class="count" id="fcCount"></div>
+      <div class="face" id="fcFace"></div>
+      <div id="fcInputs"></div>
+      <div id="fcAnswer"></div>
+      <div class="row">
+        <button class="btn" id="fcCheck" type="button">Check</button>
+        <button class="btn" id="fcNext" type="button" hidden>Next</button>
+        <button class="btn alt" id="fcStop" type="button">Stop</button>
+      </div>
+      <p class="note" id="fcHint">Capital letters and spaces don't matter in names. In symbols the capital matters: Co (cobalt) is not CO. A misspelling shows orange: fix it and check again.</p>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="panel" id="tab-game" hidden>
+    <div class="gamebar">
+      <div>
+        <div class="prompt" id="gPrompt">Find the Elements</div>
+        <div class="note" id="gStatus" style="margin:0">Tap the square for each element named. Orange squares are the 42 elements.</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="gStart" type="button">Start</button>
+      <label class="lbl"><input type="checkbox" id="gTimed"> Time me</label>
+      <span class="lbl" id="gTime"></span>
+    </div>
+    <div class="boardscroll"><div class="board" id="gBoard"></div></div>
+    <div class="legend"><span><i style="border:2.5px solid var(--orange)"></i>one of the 42</span><span><i style="background:#e6e6e6"></i>metalloid staircase</span>
+      <span><i style="background:var(--metal)"></i>metal</span><span><i style="background:var(--nonmetal)"></i>nonmetal</span><span><i style="background:var(--metalloid)"></i>metalloid</span></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="panel" id="tab-progress" hidden>
+    <h2>How solid is each element?</h2>
+    <p class="note" style="margin-top:0">Each square shows the weaker of its two cards (symbol → name, name → symbol).</p>
+    <div class="boardscroll"><div class="board" id="pBoard"></div></div>
+    <div class="legend"><span><i class="b0" style="background:#fff"></i>not started</span><span><i style="background:#fde8e6"></i>missed recently</span>
+      <span><i style="background:#fff4d6"></i>learning</span><span><i style="background:#d9f0e0"></i>getting there</span><span><i style="background:#9fd8b0"></i>solid</span><span><i style="background:#4fb371"></i>very solid</span></div>
+
+    <h2>Back up or move your progress</h2>
+    <p class="note" style="margin-top:0">Progress is saved only in this browser on this device. Nothing is sent anywhere. To keep a copy, or to move it to another device, copy this code and paste it into "Restore" there.</p>
+    <textarea id="bkOut" readonly aria-label="Backup code"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn alt" id="bkCopy" type="button">Copy backup code</button><span class="lbl" id="bkMsg"></span></div>
+    <textarea id="bkIn" placeholder="Paste a backup code here" aria-label="Paste a backup code"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn alt" id="bkRestore" type="button">Restore</button>
+      <button class="btn alt" id="bkReset" type="button">Reset all progress</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  document.getElementById('jswarn').hidden = true;
+
+  // ---------------- data ----------------
+  // [Z, symbol, name, category, family, hook, alternate spellings]
+  var EL = [
+    [1, 'H', 'Hydrogen', 'nonmetal', 'nonmetal (sits over group 1, but NOT an alkali metal)', ''],
+    [2, 'He', 'Helium', 'nonmetal', 'noble gas', ''],
+    [3, 'Li', 'Lithium', 'metal', 'alkali metal', ''],
+    [4, 'Be', 'Beryllium', 'metal', 'alkaline earth metal', ''],
+    [5, 'B', 'Boron', 'metalloid', 'metalloid (on the staircase)', ''],
+    [6, 'C', 'Carbon', 'nonmetal', 'nonmetal', ''],
+    [7, 'N', 'Nitrogen', 'nonmetal', 'nonmetal', ''],
+    [8, 'O', 'Oxygen', 'nonmetal', 'nonmetal', ''],
+    [9, 'F', 'Fluorine', 'nonmetal', 'halogen', ''],
+    [10, 'Ne', 'Neon', 'nonmetal', 'noble gas', ''],
+    [11, 'Na', 'Sodium', 'metal', 'alkali metal', 'Na = natrium (Latin)'],
+    [12, 'Mg', 'Magnesium', 'metal', 'alkaline earth metal', ''],
+    [13, 'Al', 'Aluminum', 'metal', 'metal (group 13)', '', ['aluminium']],
+    [14, 'Si', 'Silicon', 'metalloid', 'metalloid (on the staircase)', ''],
+    [15, 'P', 'Phosphorus', 'nonmetal', 'nonmetal', ''],
+    [16, 'S', 'Sulfur', 'nonmetal', 'nonmetal', '', ['sulphur']],
+    [17, 'Cl', 'Chlorine', 'nonmetal', 'halogen', ''],
+    [18, 'Ar', 'Argon', 'nonmetal', 'noble gas', ''],
+    [19, 'K', 'Potassium', 'metal', 'alkali metal', 'K = kalium (Latin)'],
+    [20, 'Ca', 'Calcium', 'metal', 'alkaline earth metal', ''],
+    [21, 'Sc', 'Scandium', 'metal', 'transition metal', ''],
+    [22, 'Ti', 'Titanium', 'metal', 'transition metal', ''],
+    [23, 'V', 'Vanadium', 'metal', 'transition metal', ''],
+    [24, 'Cr', 'Chromium', 'metal', 'transition metal', ''],
+    [25, 'Mn', 'Manganese', 'metal', 'transition metal', ''],
+    [26, 'Fe', 'Iron', 'metal', 'transition metal', 'Fe = ferrum (Latin)'],
+    [27, 'Co', 'Cobalt', 'metal', 'transition metal', ''],
+    [28, 'Ni', 'Nickel', 'metal', 'transition metal', ''],
+    [29, 'Cu', 'Copper', 'metal', 'transition metal', 'Cu = cuprum (Latin)'],
+    [30, 'Zn', 'Zinc', 'metal', 'transition metal', ''],
+    [35, 'Br', 'Bromine', 'nonmetal', 'halogen (a liquid!)', ''],
+    [36, 'Kr', 'Krypton', 'nonmetal', 'noble gas', ''],
+    [47, 'Ag', 'Silver', 'metal', 'transition metal', 'Ag = argentum (Latin)'],
+    [50, 'Sn', 'Tin', 'metal', 'metal (group 14)', 'Sn = stannum (Latin)'],
+    [53, 'I', 'Iodine', 'nonmetal', 'halogen', ''],
+    [78, 'Pt', 'Platinum', 'metal', 'transition metal', ''],
+    [79, 'Au', 'Gold', 'metal', 'transition metal', 'Au = aurum (Latin)'],
+    [80, 'Hg', 'Mercury', 'metal', 'transition metal (a liquid!)', 'Hg = hydrargyrum, "liquid silver"'],
+    [82, 'Pb', 'Lead', 'metal', 'metal (group 14)', 'Pb = plumbum (Latin), like plumbing'],
+    [86, 'Rn', 'Radon', 'nonmetal', 'noble gas (radioactive)', ''],
+    [92, 'U', 'Uranium', 'metal', 'actinide (inner transition metal)', ''],
+    [94, 'Pu', 'Plutonium', 'metal', 'actinide (inner transition metal)', '']
+  ].map(function (r) { return { z: r[0], sym: r[1], name: r[2], cat: r[3], fam: r[4], hook: r[5], alt: r[6] || [] }; });
+  var BYZ = {}; EL.forEach(function (e) { BYZ[e.z] = e; });
+  var SETS = {
+    a: EL.filter(function (e) { return e.z <= 15; }),
+    b: EL.filter(function (e) { return e.z >= 16 && e.z <= 30; }),
+    c: EL.filter(function (e) { return e.z > 30; }),
+    all: EL
+  };
+  var ALLSYM = ('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr ' +
+    'Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu ' +
+    'Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr ' +
+    'Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og').split(' ');
+  var STAIR = { 5: 1, 14: 1, 32: 1, 33: 1, 51: 1, 52: 1 };
+  var CATNAME = { metal: 'METAL', nonmetal: 'NONMETAL', metalloid: 'METALLOID' };
+
+  // Periodic-table position: [row, col]; rows 9-10 are the lanthanide/actinide strip (row 8 is a spacer).
+  function place(z) {
+    if (z === 1) return [1, 1];
+    if (z === 2) return [1, 18];
+    if (z <= 10) return [2, z <= 4 ? z - 2 : z + 8];
+    if (z <= 18) return [3, z <= 12 ? z - 10 : z];
+    if (z <= 36) return [4, z - 18];
+    if (z <= 54) return [5, z - 36];
+    if (z <= 56) return [6, z - 54];
+    if (z <= 71) return [9, z - 57 + 3];
+    if (z <= 86) return [6, z - 68];
+    if (z <= 88) return [7, z - 86];
+    if (z <= 103) return [10, z - 89 + 3];
+    return [7, z - 100];
+  }
+
+  // ---------------- storage (all calls guarded) ----------------
+  var KEY = 'tklearn-element-flashcards-v1';
+  var storeOK = true;
+  var S = { items: {}, newDay: -1, newCount: 0, set: 'a', catMode: 'type', best: {} };
+  function load() {
+    try {
+      var raw = window.localStorage.getItem(KEY);
+      if (raw) { var o = JSON.parse(raw); for (var k in o) S[k] = o[k]; }
+      window.localStorage.setItem(KEY + '-probe', '1'); window.localStorage.removeItem(KEY + '-probe');
+    } catch (e) { storeOK = false; }
+    document.getElementById('nostore').hidden = storeOK;
+  }
+  function save() {
+    if (!storeOK) return;
+    try { window.localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { storeOK = false; document.getElementById('nostore').hidden = false; }
+  }
+  load();
+  if (!SETS[S.set]) S.set = 'a';
+
+  // ---------------- scheduling (Leitner boxes) ----------------
+  var INTERVAL = { 1: 0, 2: 1, 3: 2, 4: 4, 5: 7 };   // days until due, by box
+  var NEW_PER_DAY = 12;
+  function today() { var d = new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
+  function itemsFor(set) {
+    // symbol -> name cards lead; each name -> symbol card follows 3 elements later
+    var els = SETS[set], out = [];
+    for (var i = 0; i < els.length + 3; i++) {
+      if (i < els.length) out.push(els[i].z + 's');
+      if (i - 3 >= 0) out.push(els[i - 3].z + 'n');
+    }
+    return out;
+  }
+  function newLeft() { return S.newDay === today() ? Math.max(0, NEW_PER_DAY - S.newCount) : NEW_PER_DAY; }
+  function dueList(set) { var t = today(); return itemsFor(set).filter(function (id) { var it = S.items[id]; return it && it.due <= t; }); }
+  function newList(set) { return itemsFor(set).filter(function (id) { return !S.items[id]; }); }
+  function grade(id, outcome) {
+    // outcome: 'right' (first try), 'fixed' (spelling/case fixed on retry), 'wrong'
+    var it = S.items[id];
+    if (!it) {
+      if (S.newDay !== today()) { S.newDay = today(); S.newCount = 0; }
+      S.newCount++;
+      it = { b: 1, due: today() };
+    }
+    if (outcome === 'right') it.b = Math.min(5, it.b + 1);
+    else if (outcome === 'wrong') it.b = 1;
+    it.due = today() + INTERVAL[it.b];
+    S.items[id] = it;
+    save();
+  }
+  function boxOf(id) { return S.items[id] ? S.items[id].b : 0; }
+
+  // ---------------- answer checking ----------------
+  function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+  function lev(a, b) {
+    var m = a.length, n = b.length, d = [], i, j;
+    for (i = 0; i <= m; i++) { d[i] = [i]; }
+    for (j = 0; j <= n; j++) d[0][j] = j;
+    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[m][n];
+  }
+  function checkName(input, e) {
+    var a = norm(input);
+    if (!a) return 'wrong';
+    var ok = [norm(e.name)].concat(e.alt.map(norm));
+    if (ok.indexOf(a) >= 0) return 'right';
+    // a different element's name is wrong, not "close"
+    for (var i = 0; i < EL.length; i++) if (EL[i] !== e && norm(EL[i].name) === a) return 'wrong';
+    var best = Math.min.apply(null, ok.map(function (k) { return lev(a, k); }));
+    return best <= (ok[0].length <= 5 ? 1 : 2) ? 'close' : 'wrong';
+  }
+  function checkSym(input, e) {
+    var a = String(input || '').replace(/\s+/g, '');
+    if (a === e.sym) return 'right';
+    if (a.toLowerCase() === e.sym.toLowerCase()) return 'close';
+    return 'wrong';
+  }
+  function checkCat(input, e) {
+    var a = norm(input);
+    if (!a) return 'wrong';
+    if (a === e.cat) return 'right';
+    if (['metal', 'nonmetal', 'metalloid'].indexOf(a) >= 0) return 'wrong';
+    return lev(a, e.cat) <= 2 && lev(a, e.cat) < Math.min(lev(a, e.cat === 'metal' ? 'nonmetal' : 'metal'), lev(a, e.cat === 'metalloid' ? 'nonmetal' : 'metalloid')) ? 'close' : 'wrong';
+  }
+
+  // ---------------- board rendering ----------------
+  function buildBoard(container, opts) {
+    container.innerHTML = '';
+    var cells = {};
+    for (var z = 1; z <= 118; z++) {
+      var p = place(z), node = document.createElement(opts.buttons ? 'button' : 'div');
+      if (opts.buttons) { node.type = 'button'; node.setAttribute('aria-label', 'Element ' + z + ', ' + ALLSYM[z - 1]); }
+      node.className = 'sq' + (BYZ[z] ? ' quiz' : '') + (STAIR[z] ? ' stair' : '');
+      node.style.gridRow = p[0]; node.style.gridColumn = p[1];
+      if (!opts.mini) node.innerHTML = '<span class="n">' + z + '</span>' + (opts.hideSym ? '' : ALLSYM[z - 1]);
+      node.setAttribute('data-z', z);
+      container.appendChild(node);
+      cells[z] = node;
+    }
+    var spacer = document.createElement('div'); spacer.className = 'sq gap'; spacer.style.gridRow = 8; spacer.style.gridColumn = 1;
+    spacer.style.aspectRatio = 'auto'; spacer.style.height = '6px';
+    container.appendChild(spacer);
+    return cells;
+  }
+
+  // ---------------- tabs and set picker ----------------
+  var tab = 'cards';
+  function setTab(t) {
+    tab = t;
+    [].forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+    ['cards', 'game', 'progress'].forEach(function (k) { document.getElementById('tab-' + k).hidden = k !== t; });
+    if (t === 'progress') renderProgress();
+    if (t === 'cards') renderHome();
+  }
+  [].forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.addEventListener('click', function () { stopRun(); stopGame(); setTab(b.getAttribute('data-tab')); }); });
+  function setSet(k) {
+    S.set = k; save();
+    [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.classList.toggle('on', b.getAttribute('data-set') === k); });
+    stopRun(); stopGame();
+    renderHome(); renderProgress(); resetGameBoard();
+  }
+  [].forEach.call(document.querySelectorAll('[data-set]'), function (b) { b.addEventListener('click', function () { setSet(b.getAttribute('data-set')); }); });
+  function setCatMode(m) {
+    S.catMode = m; save();
+    [].forEach.call(document.querySelectorAll('[data-catmode]'), function (b) { b.classList.toggle('on', b.getAttribute('data-catmode') === m); });
+  }
+  [].forEach.call(document.querySelectorAll('[data-catmode]'), function (b) { b.addEventListener('click', function () { setCatMode(b.getAttribute('data-catmode')); }); });
+
+  // ---------------- flashcards ----------------
+  function renderHome() {
+    var ids = itemsFor(S.set);
+    document.getElementById('stDue').textContent = dueList(S.set).length;
+    document.getElementById('stNew').textContent = Math.min(newLeft(), newList(S.set).length);
+    document.getElementById('stKnown').textContent = ids.filter(function (id) { return boxOf(id) >= 4; }).length;
+    document.getElementById('stKnownOf').textContent = 'of ' + ids.length + ' cards solid';
+    var n = dueList(S.set).length + Math.min(newLeft(), newList(S.set).length);
+    var sr = document.getElementById('startReview');
+    sr.disabled = n === 0;
+    sr.textContent = n ? 'Start review (' + n + ')' : 'All caught up for today';
+  }
+
+  var run = null; // { queue: [id], scheduled: bool, done: n, total: n, cur: {id, e, dir, tries, outcome}, catSel }
+  var home = document.getElementById('cardHome'), runEl = document.getElementById('cardRun');
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  function startRun(scheduled) {
+    var q;
+    if (scheduled) {
+      var due = shuffle(dueList(S.set));
+      var fresh = newList(S.set).slice(0, newLeft());
+      q = due.concat(fresh);
+    } else {
+      q = shuffle(itemsFor(S.set).slice());
+    }
+    if (!q.length) return;
+    run = { queue: q, scheduled: scheduled, done: 0, total: q.length, missed: 0, first: {} };
+    home.hidden = true; runEl.hidden = false;
+    document.getElementById('fcStop').textContent = 'Stop';
+    showCard();
+  }
+  function stopRun() { run = null; home.hidden = false; runEl.hidden = true; renderHome(); }
+  document.getElementById('startReview').addEventListener('click', function () { startRun(true); });
+  document.getElementById('startPractice').addEventListener('click', function () { startRun(false); });
+  document.getElementById('fcStop').addEventListener('click', stopRun);
+
+  function input(id, label) {
+    return '<div class="field" id="f-' + id + '"><label for="in-' + id + '">' + label + '</label>' +
+      '<input id="in-' + id + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="fb" id="fb-' + id + '"></div></div>';
+  }
+  function showCard() {
+    if (!run.queue.length) return finishRun();
+    var id = run.queue[0], e = BYZ[parseInt(id, 10)], dir = id.slice(-1);
+    run.cur = { id: id, e: e, dir: dir, tries: 0 };
+    run.catSel = null;
+    document.getElementById('fcCount').textContent = run.done + ' done · ' + run.queue.length + ' to go';
+    var face = document.getElementById('fcFace');
+    if (dir === 's') {
+      face.innerHTML = '<span class="z">' + e.z + '</span><div class="sym">' + e.sym + '</div><div class="ask">Name? Metal, nonmetal, or metalloid?</div>';
+      var html = input('name', 'Name');
+      if (S.catMode === 'tap') {
+        html += '<div class="field" id="f-cat"><label>Metal, nonmetal, or metalloid?</label><div class="cats">' +
+          ['metal', 'nonmetal', 'metalloid'].map(function (c) { return '<button type="button" class="cat" data-c="' + c + '">' + c + '</button>'; }).join('') +
+          '</div><div class="fb" id="fb-cat"></div></div>';
+      } else {
+        html += input('cat', 'Metal, nonmetal, or metalloid?');
+      }
+      document.getElementById('fcInputs').innerHTML = html;
+      [].forEach.call(document.querySelectorAll('#fcInputs .cat'), function (b) {
+        b.addEventListener('click', function () {
+          if (run.cur.locked) return;
+          run.catSel = b.getAttribute('data-c');
+          [].forEach.call(document.querySelectorAll('#fcInputs .cat'), function (x) { x.classList.toggle('sel', x === b); });
+        });
+      });
+    } else {
+      face.innerHTML = '<span class="z">' + e.z + '</span><div class="nm">' + e.name + '</div><div class="ask">Symbol?</div>';
+      document.getElementById('fcInputs').innerHTML = input('sym', 'Symbol');
+    }
+    document.getElementById('fcAnswer').innerHTML = '';
+    document.getElementById('fcCheck').hidden = false;
+    document.getElementById('fcNext').hidden = true;
+    var inputs = document.querySelectorAll('#fcInputs input');
+    [].forEach.call(inputs, function (inp, k) {
+      inp.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Enter') return;
+        ev.preventDefault();
+        if (inputs[k + 1]) inputs[k + 1].focus(); else check();
+      });
+      inp.addEventListener('input', function () { var f = inp.parentNode; f.className = 'field'; f.querySelector('.fb').textContent = ''; });
+    });
+    if (inputs[0]) inputs[0].focus();
+  }
+
+  function mark(field, res, msg) {
+    var f = document.getElementById('f-' + field);
+    if (f) f.className = 'field ' + res;
+    var fb = document.getElementById('fb-' + field);
+    if (fb) { fb.className = 'fb ' + res; fb.textContent = msg; }
+  }
+  function check() {
+    var c = run.cur, e = c.e, results = [];
+    if (c.locked) return;
+    c.tries++;
+    if (c.dir === 's') {
+      var rn = checkName(document.getElementById('in-name').value, e);
+      results.push(rn);
+      mark('name', rn, rn === 'right' ? 'Right.' : rn === 'close' ? 'Close. Check your spelling.' : '');
+      var rc;
+      if (S.catMode === 'tap') {
+        rc = run.catSel === e.cat ? 'right' : 'wrong';
+        if (!run.catSel) rc = 'wrong';
+        mark('cat', rc, rc === 'right' ? 'Right.' : '');
+      } else {
+        rc = checkCat(document.getElementById('in-cat').value, e);
+        mark('cat', rc, rc === 'right' ? 'Right.' : rc === 'close' ? 'Close. Check your spelling.' : '');
+      }
+      results.push(rc);
+    } else {
+      var rs = checkSym(document.getElementById('in-sym').value, e);
+      results.push(rs);
+      mark('sym', rs, rs === 'right' ? 'Right.' : rs === 'close' ? 'Right letters. Write it ' + e.sym + ': first letter capital, second letter small.' : '');
+    }
+    var anyWrong = results.indexOf('wrong') >= 0, anyClose = results.indexOf('close') >= 0;
+    if (!anyWrong && anyClose && c.tries < 3) return; // let them fix spelling or case; doesn't count yet
+    var outcome = anyWrong || anyClose ? 'wrong' : (c.tries === 1 ? 'right' : 'fixed');
+    finishCard(outcome);
+  }
+  document.getElementById('fcCheck').addEventListener('click', check);
+
+  function finishCard(outcome) {
+    var c = run.cur, e = c.e;
+    c.locked = true;
+    // first attempt of the session is what moves the schedule; repeats of a missed card only clear it
+    if (!(c.id in run.first)) {
+      run.first[c.id] = outcome;
+      if (run.scheduled) grade(c.id, outcome);
+    }
+    run.queue.shift();
+    if (outcome === 'wrong') {
+      run.missed++;
+      run.queue.splice(Math.min(3, run.queue.length), 0, c.id); // back of the stack: returns in a few cards
+    } else {
+      run.done++;
+    }
+    [].forEach.call(document.querySelectorAll('#fcInputs input'), function (i) { i.readOnly = true; });
+    [].forEach.call(document.querySelectorAll('#fcInputs .cat'), function (b) {
+      var cc = b.getAttribute('data-c');
+      if (cc === e.cat) b.classList.add('right'); else if (cc === run.catSel) b.classList.add('wrong');
+    });
+    var head = outcome === 'wrong' ? '<div class="result wrong">Not yet. This card comes back in a few cards.</div>'
+      : outcome === 'fixed' ? '<div class="result close">Got it after fixing. It stays at the same level.</div>'
+      : '<div class="result right">Right!</div>';
+    var ans = document.getElementById('fcAnswer');
+    ans.innerHTML = head + '<div class="ans ' + e.cat + '"><div class="big">' + e.sym + ' · ' + e.name + ' · ' + e.z + '</div>' +
+      '<div><b>' + CATNAME[e.cat] + '</b> · ' + e.fam + '</div>' + (e.hook ? '<div class="hook">' + e.hook + '</div>' : '') +
+      '<div class="board mini" id="miniBoard"></div></div>';
+    var cells = buildBoard(document.getElementById('miniBoard'), { mini: true });
+    cells[e.z].classList.add('hit');
+    document.getElementById('fcCheck').hidden = true;
+    var next = document.getElementById('fcNext');
+    next.hidden = false;
+    next.focus();
+  }
+  document.getElementById('fcNext').addEventListener('click', showCard);
+
+  function finishRun() {
+    var firstRight = 0, n = 0;
+    for (var k in run.first) { n++; if (run.first[k] === 'right') firstRight++; }
+    document.getElementById('fcCount').textContent = '';
+    document.getElementById('fcFace').innerHTML = '<div class="done"><div class="big">Done!</div>' + firstRight + ' of ' + n + ' right on the first try.' +
+      (run.scheduled ? '<br>Cards you missed will come back tomorrow.' : '') + '</div>';
+    document.getElementById('fcInputs').innerHTML = '';
+    document.getElementById('fcAnswer').innerHTML = '';
+    document.getElementById('fcCheck').hidden = true;
+    document.getElementById('fcNext').hidden = true;
+    document.getElementById('fcStop').textContent = 'Back';
+    run.queue = [];
+  }
+
+  // ---------------- Find the Elements ----------------
+  var g = null, gCells = {}, gTimer = null;
+  function resetGameBoard() {
+    gCells = buildBoard(document.getElementById('gBoard'), { buttons: true });
+    Object.keys(gCells).forEach(function (z) { gCells[z].addEventListener('click', function () { tapGame(parseInt(z, 10)); }); });
+    document.getElementById('gPrompt').textContent = 'Find the Elements';
+    document.getElementById('gStatus').textContent = 'Tap the square for each element named. Orange squares are the 42 elements.';
+    document.getElementById('gStart').textContent = 'Start';
+    var best = S.best[S.set];
+    document.getElementById('gTime').textContent = best ? 'Best time: ' + fmt(best) : '';
+  }
+  function fmt(ms) { var s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  function stopGame() { if (gTimer) clearInterval(gTimer); gTimer = null; g = null; }
+  function clearHints() {
+    Object.keys(gCells).forEach(function (z) { gCells[z].classList.remove('miss', 'rowhint', 'reveal'); });
+  }
+  document.getElementById('gStart').addEventListener('click', function () {
+    stopGame(); resetGameBoard();
+    g = { queue: shuffle(SETS[S.set].map(function (e) { return e.z; })), misses: 0, firstTry: 0, total: SETS[S.set].length,
+      timed: document.getElementById('gTimed').checked, t0: Date.now() };
+    document.getElementById('gStart').textContent = 'Restart';
+    if (g.timed) gTimer = setInterval(function () { if (g) document.getElementById('gTime').textContent = fmt(Date.now() - g.t0); }, 500);
+    else document.getElementById('gTime').textContent = '';
+    nextTarget();
+  });
+  function nextTarget() {
+    clearHints();
+    if (!g.queue.length) return endGame();
+    g.misses = 0;
+    var e = BYZ[g.queue[0]];
+    document.getElementById('gPrompt').innerHTML = 'Find: ' + e.name;
+    document.getElementById('gStatus').textContent = (g.total - g.queue.length) + ' of ' + g.total + ' found';
+  }
+  function tapGame(z) {
+    if (!g || !g.queue.length) return;
+    var target = g.queue[0], e = BYZ[target];
+    if (z === target) {
+      if (g.misses === 0) g.firstTry++;
+      gCells[z].classList.add('found', e.cat);
+      g.queue.shift();
+      nextTarget();
+      return;
+    }
+    g.misses++;
+    gCells[z].classList.add('miss');
+    setTimeout(function () { if (gCells[z]) gCells[z].classList.remove('miss'); }, 600);
+    if (g.misses === 2) {
+      var row = place(target)[0];
+      Object.keys(gCells).forEach(function (k) { if (place(+k)[0] === row) gCells[k].classList.add('rowhint'); });
+      document.getElementById('gStatus').textContent = 'Hint: it is in the highlighted row.';
+    } else if (g.misses >= 3) {
+      gCells[target].classList.add('reveal');
+      document.getElementById('gStatus').textContent = 'Here it is: ' + e.sym + ', atomic number ' + e.z + '. Tap it.';
+    }
+  }
+  function endGame() {
+    var ms = Date.now() - g.t0, msg = 'All ' + g.total + ' found! ' + g.firstTry + ' on the first tap.';
+    if (g.timed) {
+      clearInterval(gTimer); gTimer = null;
+      var best = S.best[S.set];
+      if (!best || ms < best) { S.best[S.set] = ms; save(); msg += ' New best time: ' + fmt(ms) + '.'; }
+      else msg += ' Time: ' + fmt(ms) + ' (best ' + fmt(best) + ').';
+    }
+    document.getElementById('gPrompt').textContent = 'Done!';
+    document.getElementById('gStatus').textContent = msg;
+    g = null;
+  }
+
+  // ---------------- progress + backup ----------------
+  function renderProgress() {
+    var cells = buildBoard(document.getElementById('pBoard'), {});
+    var inSet = {}; SETS[S.set].forEach(function (e) { inSet[e.z] = 1; });
+    EL.forEach(function (e) {
+      var b = Math.min(boxOf(e.z + 's'), boxOf(e.z + 'n'));
+      cells[e.z].classList.add('b' + b);
+      if (!inSet[e.z]) cells[e.z].style.opacity = '.45';
+    });
+    var code = '';
+    try { code = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, items: S.items, best: S.best })))); } catch (e) {}
+    document.getElementById('bkOut').value = code;
+    document.getElementById('bkMsg').textContent = '';
+  }
+  document.getElementById('bkCopy').addEventListener('click', function () {
+    var t = document.getElementById('bkOut'); t.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    if (navigator.clipboard) { navigator.clipboard.writeText(t.value).then(function () {}, function () {}); ok = true; }
+    document.getElementById('bkMsg').textContent = ok ? 'Copied.' : 'Select the code and copy it.';
+  });
+  document.getElementById('bkRestore').addEventListener('click', function () {
+    var msg = document.getElementById('bkMsg');
+    try {
+      var o = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('bkIn').value.trim()))));
+      if (!o || o.v !== 1 || typeof o.items !== 'object') throw new Error('bad');
+      S.items = o.items; S.best = o.best || {}; save();
+      document.getElementById('bkIn').value = '';
+      renderProgress(); renderHome();
+      msg.textContent = 'Restored.';
+    } catch (e) { msg.textContent = 'That code did not work. Copy the whole code and try again.'; }
+  });
+  var resetArmed = false;
+  document.getElementById('bkReset').addEventListener('click', function () {
+    var b = document.getElementById('bkReset');
+    if (!resetArmed) { resetArmed = true; b.textContent = 'Tap again to erase all progress'; setTimeout(function () { resetArmed = false; b.textContent = 'Reset all progress'; }, 4000); return; }
+    S.items = {}; S.best = {}; S.newDay = -1; S.newCount = 0; save();
+    resetArmed = false; b.textContent = 'Reset all progress';
+    renderProgress(); renderHome();
+  });
+
+  // ---------------- start ----------------
+  setCatMode(S.catMode === 'tap' ? 'tap' : 'type');
+  setSet(S.set);
+  setTab('cards');
+
+  // test hook: lets the smoke test move the clock forward a day
+  window.__tklearn = { shiftDays: function (n) { var real = today; today = function () { return real() + n; }; renderHome(); } };
+})();
+</script>
+</body>
+</html>
