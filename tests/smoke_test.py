@@ -342,6 +342,9 @@ def connections_spelling_blank(browser):
     for g in range(4):
         pick([g] * 4)
     check(page.locator("#cxSolved .cx-solved").count() == 4, "all 4 groups should be solved")
+    for lab in page.locator("#cxSolved .lab").all_inner_texts():   # as displayed, so CSS case changes are caught
+        sym, name, num = lab.split(" · ")
+        check(sym in BY_SYM and BY_SYM[sym][2] == name, f"solved label shows wrong capitals: {lab!r}")
     check(page.locator("#cxMsg").inner_text().startswith("Solved! 2 mistakes"), f"solved message: {page.locator('#cxMsg').inner_text()}")
 
     # --- Connections, same family ---
@@ -350,7 +353,7 @@ def connections_spelling_blank(browser):
     for g in range(4):
         pick([g] * 4)
     labels = page.locator("#cxSolved .lab").all_inner_texts()
-    check(any("HALOGENS" in l.upper() for l in labels) and any("NOBLE" in l.upper() for l in labels), f"family labels: {labels}")
+    check("Halogens" in labels and "Noble gases" in labels, f"family labels: {labels}")
 
     # --- Spelling families: every one of the 42 names exactly once (plus the sneaky-y strip) ---
     page.click('[data-tab="spell"]')
