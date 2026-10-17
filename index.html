@@ -314,9 +314,9 @@
   <div class="panel" id="tab-spell" hidden>
     <div class="prompt">Spelling: meaning, letters, sounds</div>
     <div class="row" style="margin-top:6px">
+      <button class="pill" type="button" data-spellview="phon">Phonemes (sounds)</button>
       <button class="pill" type="button" data-spellview="morph">Morphemes (meaning)</button>
       <button class="pill" type="button" data-spellview="graph">Graphemes (letters for a sound)</button>
-      <button class="pill" type="button" data-spellview="phon">Phonemes (sounds)</button>
     </div>
     <p class="note" id="spellDef" style="margin-top:0"></p>
     <p class="note" style="margin-top:0">Tap any name to hear it and see its graphemes, meaning, and spot on the table. Names outside the element group you picked are faded.</p>
@@ -1298,7 +1298,7 @@
   [].forEach.call(document.querySelectorAll('[data-spellview]'), function (b) {
     b.addEventListener('click', function () { S.spellView = b.getAttribute('data-spellview'); save(); renderFams(); });
   });
-  function spellView() { return SPELLVIEWS[S.spellView] ? S.spellView : 'morph'; }
+  function spellView() { return SPELLVIEWS[S.spellView] ? S.spellView : 'phon'; }  // phonemes first
   function renderFams() {
     var view = spellView(), V = SPELLVIEWS[view];
     [].forEach.call(document.querySelectorAll('[data-spellview]'), function (b) { b.classList.toggle('on', b.getAttribute('data-spellview') === view); });

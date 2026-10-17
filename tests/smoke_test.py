@@ -412,7 +412,10 @@ def connections_spelling_blank(browser):
 
     # --- Spelling: three views. Morphemes (default) list every name's meaning exactly once ---
     page.click('[data-tab="spell"]')
-    check("morpheme" in page.locator("#spellDef").inner_text(), "Spelling should open on morphemes")
+    check([b.strip() for b in page.locator("[data-spellview]").all_inner_texts()] == ["Phonemes (sounds)", "Morphemes (meaning)", "Graphemes (letters for a sound)"], "order: phonemes, morphemes, graphemes")
+    check("phoneme" in page.locator("#spellDef").inner_text(), "Spelling should open on phonemes")
+    page.click('[data-spellview="morph"]')
+    check("morpheme" in page.locator("#spellDef").inner_text(), "morpheme view")
     mg = page.locator("#fams .fgroup")
     check(mg.count() == 2 and mg.nth(0).locator("h3").all_inner_texts()[:2] == ['-gen: "maker"', "Symbols from older names"]
           and all(h.startswith("Naming pattern") for h in mg.nth(1).locator("h3").all_inner_texts()), "morphemes first, then naming patterns")
